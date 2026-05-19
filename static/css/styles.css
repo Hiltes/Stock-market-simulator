@@ -181,6 +181,7 @@ button:hover {
 .market-data,
 .decision-panel,
 .chart-section,
+.model-section,
 .history-section {
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -215,6 +216,7 @@ button:hover {
 .market-data,
 .decision-panel,
 .chart-section,
+.model-section,
 .history-section {
     padding: 20px;
 }
@@ -253,8 +255,36 @@ button:hover {
     background: #f8fbf9;
 }
 
+.prediction-box.prediction-up {
+    border-left-color: var(--accent);
+}
+
+.prediction-box.prediction-down {
+    border-left-color: var(--danger);
+}
+
+.prediction-box.prediction-flat {
+    border-left-color: var(--muted);
+}
+
 .prediction-box strong {
     font-size: 1.35rem;
+}
+
+.prediction-box em {
+    color: var(--muted);
+    font-style: normal;
+    font-weight: 700;
+}
+
+.prediction-box.prediction-up strong,
+.prediction-box.prediction-up em {
+    color: var(--accent);
+}
+
+.prediction-box.prediction-down strong,
+.prediction-box.prediction-down em {
+    color: var(--danger);
 }
 
 .prediction-box small {
@@ -272,6 +302,11 @@ button:hover {
     position: relative;
     width: 100%;
     min-height: 300px;
+}
+
+.model-metrics-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    margin-top: 14px;
 }
 
 .table-wrap {
@@ -320,6 +355,7 @@ th {
     }
 
     .metrics-grid,
+    .model-metrics-grid,
     .trading-layout,
     .ohlc-list,
     .action-row {

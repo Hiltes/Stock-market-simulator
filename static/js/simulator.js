@@ -63,6 +63,10 @@ function money(value) {
     return `${Number(value).toFixed(2)} USD`;
 }
 
+function percent(value) {
+    return `${Number(value).toFixed(2)}%`;
+}
+
 function renderState(state) {
     const day = state.current_day;
     const portfolio = state.portfolio;
@@ -80,8 +84,8 @@ function renderState(state) {
     setText('#day-low', money(day.low));
     setText('#day-close', money(day.close));
     setText('#day-volume', Number(day.volume).toLocaleString('pl-PL'));
-    setText('#prediction', `${prediction.direction} / ${money(prediction.predicted_close)}`);
-    setText('#prediction-details', `${prediction.model}, pewność ${prediction.confidence}`);
+    renderPrediction(prediction);
+    renderModelMetrics(state.model_metrics);
 
     const profitLoss = document.querySelector('#profit-loss');
     profitLoss.classList.toggle('is-positive', Number(portfolio.profit_loss) > 0);
@@ -94,6 +98,51 @@ function renderState(state) {
     if (state.finished) {
         actionMessage.textContent = 'Symulacja zakończona. Możesz uruchomić nową.';
     }
+}
+
+function renderPrediction(prediction) {
+    const predictionBox = document.querySelector('#prediction-box');
+    const direction = prediction.direction || 'FLAT';
+    const change = Number(prediction.change || 0);
+    const arrow = direction === 'UP' ? '▲' : direction === 'DOWN' ? '▼' : '■';
+    const label = direction === 'UP' ? 'wzrost' : direction === 'DOWN' ? 'spadek' : 'bez zmian';
+    const signedChange = `${change >= 0 ? '+' : ''}${money(change)}`;
+    const signedPercent = `${Number(prediction.change_percent || 0) >= 0 ? '+' : ''}${percent(prediction.change_percent || 0)}`;
+
+    predictionBox.classList.toggle('prediction-up', direction === 'UP');
+    predictionBox.classList.toggle('prediction-down', direction === 'DOWN');
+    predictionBox.classList.toggle('prediction-flat', direction === 'FLAT');
+
+    setText('#prediction', `${arrow} ${label}: ${money(prediction.predicted_close)}`);
+    setText('#prediction-change', `${signedChange} (${signedPercent}) względem dzisiejszego zamknięcia`);
+    setText('#prediction-details', `${prediction.model}, pewność ${percent(Number(prediction.confidence || 0) * 100)}`);
+}
+
+function renderModelMetrics(modelMetrics) {
+    if (!modelMetrics) {
+        return;
+    }
+
+    const metrics = modelMetrics.metrics;
+    setText('#model-name', modelMetrics.model_name || '-');
+    setText('#model-warning', modelMetrics.warning || '');
+
+    if (!metrics) {
+        ['#metric-mae', '#metric-rmse', '#metric-r2', '#metric-accuracy', '#metric-f1'].forEach((selector) => {
+            setText(selector, '-');
+        });
+        return;
+    }
+
+    setText('#metric-mae', formatMetric(metrics.regression.mae));
+    setText('#metric-rmse', formatMetric(metrics.regression.rmse));
+    setText('#metric-r2', formatMetric(metrics.regression.r2));
+    setText('#metric-accuracy', formatMetric(metrics.classification.accuracy));
+    setText('#metric-f1', formatMetric(metrics.classification.f1));
+}
+
+function formatMetric(value) {
+    return value === null || value === undefined ? '-' : Number(value).toFixed(3);
 }
 
 function renderHistory(history) {
@@ -118,28 +167,80 @@ function renderHistory(history) {
 function renderChart(portfolioHistory) {
     const labels = portfolioHistory.map((item) => item.date);
     const closePrices = portfolioHistory.map((item) => Number(item.stock_price));
+    const openPrices = portfolioHistory.map((item) => Number(item.open));
+    const highPrices = portfolioHistory.map((item) => Number(item.high));
+    const lowPrices = portfolioHistory.map((item) => Number(item.low));
+    const volumes = portfolioHistory.map((item) => Number(item.volume));
     const ctx = document.querySelector('#price-chart');
+    const datasets = [
+        {
+            label: 'Zamknięcie',
+            data: closePrices,
+            borderColor: '#126c59',
+            backgroundColor: 'rgba(18, 108, 89, 0.12)',
+            fill: false,
+            tension: 0.25,
+            yAxisID: 'price',
+        },
+        {
+            label: 'Otwarcie',
+            data: openPrices,
+            borderColor: '#4b7bec',
+            backgroundColor: 'rgba(75, 123, 236, 0.08)',
+            fill: false,
+            tension: 0.2,
+            yAxisID: 'price',
+        },
+        {
+            label: 'Maksimum',
+            data: highPrices,
+            borderColor: '#d18b00',
+            backgroundColor: 'rgba(209, 139, 0, 0.08)',
+            fill: false,
+            tension: 0.2,
+            yAxisID: 'price',
+        },
+        {
+            label: 'Minimum',
+            data: lowPrices,
+            borderColor: '#a13535',
+            backgroundColor: 'rgba(161, 53, 53, 0.08)',
+            fill: false,
+            tension: 0.2,
+            yAxisID: 'price',
+        },
+        {
+            type: 'bar',
+            label: 'Wolumen',
+            data: volumes,
+            borderColor: 'rgba(101, 115, 111, 0.35)',
+            backgroundColor: 'rgba(101, 115, 111, 0.18)',
+            yAxisID: 'volume',
+        },
+    ];
 
     if (!priceChart) {
         priceChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels,
-                datasets: [{
-                    label: 'Cena zamknięcia',
-                    data: closePrices,
-                    borderColor: '#126c59',
-                    backgroundColor: 'rgba(18, 108, 89, 0.12)',
-                    fill: true,
-                    tension: 0.25,
-                }],
+                datasets,
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
+                    price: {
+                        type: 'linear',
+                        position: 'left',
                         beginAtZero: false,
+                    },
+                    volume: {
+                        type: 'linear',
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false,
+                        },
                     },
                 },
             },
@@ -148,7 +249,7 @@ function renderChart(portfolioHistory) {
     }
 
     priceChart.data.labels = labels;
-    priceChart.data.datasets[0].data = closePrices;
+    priceChart.data.datasets = datasets;
     priceChart.update();
 }
 

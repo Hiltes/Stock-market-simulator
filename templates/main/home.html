@@ -96,9 +96,10 @@
                 <div><dt>Wolumen</dt><dd id="day-volume">-</dd></div>
             </dl>
 
-            <div class="prediction-box">
+            <div class="prediction-box" id="prediction-box">
                 <span>Predykcja modelu bazowego</span>
                 <strong id="prediction">-</strong>
+                <em id="prediction-change">-</em>
                 <small id="prediction-details">-</small>
             </div>
         </section>
@@ -122,11 +123,41 @@
 
     <section class="chart-section">
         <div class="section-heading">
-            <h3>Odkryty kurs zamknięcia</h3>
+            <h3>Odkryte dane giełdowe</h3>
         </div>
         <div class="chart-frame">
             <canvas id="price-chart"></canvas>
         </div>
+    </section>
+
+    <section class="model-section">
+        <div class="section-heading">
+            <h3>Jakość modelu</h3>
+            <span id="model-name">-</span>
+        </div>
+        <div class="metrics-grid model-metrics-grid">
+            <article class="metric">
+                <span>MAE</span>
+                <strong id="metric-mae">-</strong>
+            </article>
+            <article class="metric">
+                <span>RMSE</span>
+                <strong id="metric-rmse">-</strong>
+            </article>
+            <article class="metric">
+                <span>R2</span>
+                <strong id="metric-r2">-</strong>
+            </article>
+            <article class="metric">
+                <span>Accuracy</span>
+                <strong id="metric-accuracy">-</strong>
+            </article>
+            <article class="metric">
+                <span>F1</span>
+                <strong id="metric-f1">-</strong>
+            </article>
+        </div>
+        <p class="form-note" id="model-warning"></p>
     </section>
 
     <section class="history-section">

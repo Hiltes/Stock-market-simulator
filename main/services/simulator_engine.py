@@ -110,6 +110,11 @@ def portfolio_snapshot(state: dict[str, Any]) -> dict[str, Any]:
         'cash': _money_to_string(cash),
         'shares': shares,
         'stock_price': _money_to_string(price),
+        'open': current_day['open'],
+        'high': current_day['high'],
+        'low': current_day['low'],
+        'close': current_day['close'],
+        'volume': current_day['volume'],
         'portfolio_value': _money_to_string(value),
         'profit_loss': _money_to_string(value - initial_cash),
     }
