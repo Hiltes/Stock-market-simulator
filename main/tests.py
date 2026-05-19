@@ -1,7 +1,9 @@
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from django.test import Client, SimpleTestCase, override_settings
 
+from main.services.preprocessing import FEATURE_COLUMNS, build_feature_frame
 from main.services.simulator_engine import (
     SimulationError,
     create_simulation_state,
@@ -15,6 +17,35 @@ SAMPLE_PRICES = [
     {'date': '2024-01-03', 'open': '101.00', 'high': '112.00', 'low': '100.00', 'close': '110.00', 'volume': 1200},
     {'date': '2024-01-04', 'open': '109.00', 'high': '115.00', 'low': '105.00', 'close': '105.00', 'volume': 900},
 ]
+
+
+def synthetic_prices(days=40):
+    prices = []
+    start = date(2024, 2, 1)
+    for index in range(days):
+        current_date = start + timedelta(days=index)
+        close = 100 + index * 1.5
+        prices.append(
+            {
+                'date': current_date.isoformat(),
+                'open': f'{close - 0.50:.2f}',
+                'high': f'{close + 1.50:.2f}',
+                'low': f'{close - 1.25:.2f}',
+                'close': f'{close:.2f}',
+                'volume': 1000 + index * 10,
+            }
+        )
+    return prices
+
+
+class PreprocessingTests(SimpleTestCase):
+    def test_feature_frame_contains_time_series_features_and_targets(self):
+        frame = build_feature_frame(synthetic_prices())
+
+        self.assertGreater(len(frame), 0)
+        for column in FEATURE_COLUMNS + ['target_close', 'target_direction']:
+            self.assertIn(column, frame.columns)
+        self.assertTrue(set(frame['target_direction'].unique()).issubset({0, 1}))
 
 
 class SimulatorEngineTests(SimpleTestCase):
