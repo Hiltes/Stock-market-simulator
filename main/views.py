@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
 from main.services.data_loader import StockDataError, load_stock_prices
+from main.services.ml_model import ModelTrainingError, build_prediction_artifacts
 from main.services.simulator_engine import (
     SimulationError,
     create_simulation_state,
@@ -28,6 +29,7 @@ def api_start_simulation(request):
 
         prices = load_stock_prices(ticker, start_date, end_date)
         state = create_simulation_state(ticker.strip().upper(), prices, initial_cash)
+        state['ml_artifacts'] = _build_ml_artifacts(prices)
         request.session['simulation_state'] = state
         request.session.modified = True
 
@@ -71,8 +73,39 @@ def api_history(request):
 
 def _state_response(state):
     response = serialize_state(state)
-    response['prediction'] = _baseline_prediction(state)
+    response['prediction'] = _prediction_for_state(state)
+    response['model_metrics'] = _model_metrics(state)
     return response
+
+
+def _build_ml_artifacts(prices):
+    try:
+        return build_prediction_artifacts(prices)
+    except ModelTrainingError as exc:
+        return {
+            'model_name': 'Model bazowy',
+            'metrics': None,
+            'predictions_by_date': {},
+            'warning': str(exc),
+        }
+
+
+def _prediction_for_state(state):
+    current_day = state['prices'][int(state['current_step'])]
+    artifacts = state.get('ml_artifacts') or {}
+    prediction = artifacts.get('predictions_by_date', {}).get(current_day['date'])
+    if prediction:
+        return prediction
+    return _baseline_prediction(state)
+
+
+def _model_metrics(state):
+    artifacts = state.get('ml_artifacts') or {}
+    return {
+        'model_name': artifacts.get('model_name', 'Model bazowy'),
+        'metrics': artifacts.get('metrics'),
+        'warning': artifacts.get('warning'),
+    }
 
 
 def _baseline_prediction(state):
@@ -87,11 +120,16 @@ def _baseline_prediction(state):
         predicted_close = current_close + (current_close - previous_close)
 
     direction = 'UP' if predicted_close > current_close else 'DOWN' if predicted_close < current_close else 'FLAT'
+    change = predicted_close - current_close
+    change_percent = (change / current_close) * 100 if current_close else 0
     return {
         'model': 'model bazowy momentum',
         'predicted_close': f'{predicted_close:.2f}',
         'direction': direction,
         'confidence': 0.5,
+        'probability_up': 0.5,
+        'change': f'{change:.2f}',
+        'change_percent': round(change_percent, 4),
     }
 
 
