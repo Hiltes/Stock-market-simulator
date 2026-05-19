@@ -23,7 +23,7 @@ async function postJson(url, payload) {
     });
     const data = await response.json();
     if (!response.ok) {
-        throw new Error(data.error || 'Wystapil blad.');
+        throw new Error(data.error || 'Wystąpił błąd.');
     }
     return data;
 }
@@ -59,7 +59,7 @@ function renderState(state) {
     setText('#day-close', money(day.close));
     setText('#day-volume', Number(day.volume).toLocaleString('pl-PL'));
     setText('#prediction', `${prediction.direction} / ${money(prediction.predicted_close)}`);
-    setText('#prediction-details', `${prediction.model}, confidence ${prediction.confidence}`);
+    setText('#prediction-details', `${prediction.model}, pewność ${prediction.confidence}`);
 
     const profitLoss = document.querySelector('#profit-loss');
     profitLoss.classList.toggle('is-positive', Number(portfolio.profit_loss) > 0);
@@ -70,7 +70,7 @@ function renderState(state) {
     setActionsDisabled(state.finished);
 
     if (state.finished) {
-        actionMessage.textContent = 'Symulacja zakonczona. Mozesz uruchomic nowa.';
+        actionMessage.textContent = 'Symulacja zakończona. Możesz uruchomić nową.';
     }
 }
 
@@ -104,7 +104,7 @@ function renderChart(portfolioHistory) {
             data: {
                 labels,
                 datasets: [{
-                    label: 'Close',
+                    label: 'Cena zamknięcia',
                     data: closePrices,
                     borderColor: '#126c59',
                     backgroundColor: 'rgba(18, 108, 89, 0.12)',
@@ -139,7 +139,7 @@ function setActionsDisabled(disabled) {
 
 startForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    startMessage.textContent = 'Pobieram dane i startuje symulacje...';
+    startMessage.textContent = 'Pobieram dane i uruchamiam symulację...';
 
     try {
         const state = await postJson(startForm.action, formPayload(startForm));
@@ -154,7 +154,7 @@ startForm.addEventListener('submit', async (event) => {
 
 actionButtons.forEach((button) => {
     button.addEventListener('click', async () => {
-        actionMessage.textContent = 'Aktualizuje portfel...';
+        actionMessage.textContent = 'Aktualizuję portfel...';
         const action = button.dataset.action;
         const shares = action === 'HOLD' ? 0 : tradeSharesInput.value;
 
@@ -171,7 +171,7 @@ actionButtons.forEach((button) => {
 newSimulationButton.addEventListener('click', () => {
     tradingPanel.classList.add('is-hidden');
     startSection.classList.remove('is-hidden');
-    startMessage.textContent = 'Pobieranie danych moze potrwac kilka sekund.';
+    startMessage.textContent = 'Pobieranie danych może potrwać kilka sekund.';
     actionMessage.textContent = '';
     setActionsDisabled(false);
 });

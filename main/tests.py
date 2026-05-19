@@ -78,7 +78,7 @@ class SimulationApiTests(SimpleTestCase):
         self.assertEqual(payload['ticker'], 'AAPL')
         self.assertEqual(payload['current_day']['date'], '2024-01-02')
         self.assertEqual(payload['portfolio']['cash'], '1000.00')
-        self.assertEqual(payload['prediction']['model'], 'baseline_momentum')
+        self.assertEqual(payload['prediction']['model'], 'model bazowy momentum')
 
     @patch('main.views.load_stock_prices')
     def test_action_updates_session_state(self, load_stock_prices):

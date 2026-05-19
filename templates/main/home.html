@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Start symulacji | Stock Market Simulator{% endblock %}
+{% block title %}Start symulacji | Symulator giełdowy{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -8,10 +8,10 @@
 <section class="start-layout" id="start-section">
     <div class="intro">
         <p class="eyebrow">Symulator inwestowania</p>
-        <h1>Przejdz przez dane gieldowe dzien po dniu.</h1>
+        <h1>Przejdź przez dane giełdowe dzień po dniu.</h1>
         <p class="lead">
-            Wybierz spolke, zakres dat i kapital poczatkowy. Aplikacja pobierze rzeczywiste dane
-            historyczne, a potem pozwoli podejmowac decyzje kupna, sprzedazy albo czekania.
+            Wybierz spółkę, zakres dat i kapitał początkowy. Aplikacja pobierze rzeczywiste dane
+            historyczne, a potem pozwoli podejmować decyzje kupna, sprzedaży albo czekania.
         </p>
     </div>
 
@@ -28,22 +28,22 @@
         </label>
 
         <label>
-            Data poczatkowa
+            Data początkowa
             <input type="date" name="start_date" value="2021-01-01" required>
         </label>
 
         <label>
-            Data koncowa
+            Data końcowa
             <input type="date" name="end_date" value="2024-01-01" required>
         </label>
 
         <label>
-            Gotowka poczatkowa
+            Gotówka początkowa
             <input type="number" name="initial_cash" value="10000" min="100" step="100" required>
         </label>
 
         <button type="submit">Start symulacji</button>
-        <p class="form-note" id="start-message">Pobieranie danych moze potrwac kilka sekund.</p>
+        <p class="form-note" id="start-message">Pobieranie danych może potrwać kilka sekund.</p>
     </form>
 </section>
 
@@ -62,11 +62,11 @@
             <strong id="current-date">-</strong>
         </article>
         <article class="metric">
-            <span>Cena zamkniecia</span>
+            <span>Cena zamknięcia</span>
             <strong id="current-close">-</strong>
         </article>
         <article class="metric">
-            <span>Gotowka</span>
+            <span>Gotówka</span>
             <strong id="cash">-</strong>
         </article>
         <article class="metric">
@@ -74,7 +74,7 @@
             <strong id="shares">-</strong>
         </article>
         <article class="metric">
-            <span>Wartosc portfela</span>
+            <span>Wartość portfela</span>
             <strong id="portfolio-value">-</strong>
         </article>
         <article class="metric">
@@ -89,15 +89,15 @@
                 <h3>Dane dnia</h3>
             </div>
             <dl class="ohlc-list">
-                <div><dt>Open</dt><dd id="day-open">-</dd></div>
-                <div><dt>High</dt><dd id="day-high">-</dd></div>
-                <div><dt>Low</dt><dd id="day-low">-</dd></div>
-                <div><dt>Close</dt><dd id="day-close">-</dd></div>
-                <div><dt>Volume</dt><dd id="day-volume">-</dd></div>
+                <div><dt>Otwarcie</dt><dd id="day-open">-</dd></div>
+                <div><dt>Maksimum</dt><dd id="day-high">-</dd></div>
+                <div><dt>Minimum</dt><dd id="day-low">-</dd></div>
+                <div><dt>Zamknięcie</dt><dd id="day-close">-</dd></div>
+                <div><dt>Wolumen</dt><dd id="day-volume">-</dd></div>
             </dl>
 
             <div class="prediction-box">
-                <span>Predykcja bazowa</span>
+                <span>Predykcja modelu bazowego</span>
                 <strong id="prediction">-</strong>
                 <small id="prediction-details">-</small>
             </div>
@@ -122,7 +122,7 @@
 
     <section class="chart-section">
         <div class="section-heading">
-            <h3>Odkryty kurs zamkniecia</h3>
+            <h3>Odkryty kurs zamknięcia</h3>
         </div>
         <div class="chart-frame">
             <canvas id="price-chart"></canvas>
@@ -141,8 +141,8 @@
                         <th>Akcja</th>
                         <th>Akcje</th>
                         <th>Cena</th>
-                        <th>Gotowka po</th>
-                        <th>Wartosc po</th>
+                        <th>Gotówka po</th>
+                        <th>Wartość po</th>
                     </tr>
                 </thead>
                 <tbody id="history-body">

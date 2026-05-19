@@ -1,11 +1,11 @@
-# Stock Market Simulator
+# Symulator giełdowy
 
-Webowy symulator inwestowania w akcje z predykcja kursow. Projekt jest budowany w Django, z PostgreSQL jako baza danych oraz Docker Compose do uruchamiania lokalnego srodowiska.
+Webowy symulator inwestowania w akcje z predykcją kursów. Projekt jest budowany w Django, z PostgreSQL jako bazą danych oraz Docker Compose do uruchamiania lokalnego środowiska.
 
 ## Wymagania
 
 - Docker i Docker Compose
-- Python 3.12, jesli uruchamiasz projekt bez Dockera
+- Python 3.12, jeśli uruchamiasz projekt bez Dockera
 
 ## Uruchamianie w Dockerze
 
@@ -13,13 +13,13 @@ Webowy symulator inwestowania w akcje z predykcja kursow. Projekt jest budowany 
 docker compose up --build
 ```
 
-Aplikacja bedzie dostepna pod adresem:
+Kontener `web` automatycznie wykona migracje bazy, a aplikacja będzie dostępna pod adresem:
 
 ```text
 http://localhost:8000/
 ```
 
-W drugim terminalu mozna wykonac migracje:
+Migracje mozna tez wykonac recznie:
 
 ```powershell
 docker compose exec web python manage.py migrate
@@ -35,13 +35,28 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Domyslna konfiguracja lokalna oczekuje PostgreSQL dostepnego pod `localhost:5432` z danymi:
+Domyślna konfiguracja lokalna oczekuje PostgreSQL dostępnego pod `localhost:5432` z danymi:
 
 - baza: `stock_db`
-- uzytkownik: `stock_user`
-- haslo: `stock_password`
+- użytkownik: `stock_user`
+- hasło: `stock_password`
 
-W Dockerze te wartosci sa ustawiane automatycznie w `docker-compose.yml`.
+W Dockerze te wartości są ustawiane automatycznie w `docker-compose.yml`.
+
+## Gdy widzisz domyślną stronę Django
+
+Jeśli po zmianie brancha na `http://localhost:8000/` nadal pojawia się ekran "The install worked successfully", działa stary proces serwera. Zrestartuj usługę:
+
+```powershell
+docker compose restart web
+```
+
+Jeśli to nie pomoże, przebuduj kontenery:
+
+```powershell
+docker compose down
+docker compose up --build
+```
 
 ## Testy
 
@@ -53,9 +68,9 @@ python manage.py test
 
 Pierwsza wersja aplikacji ma zapewnic:
 
-- formularz startu symulacji z tickerem, datami i gotowka startowa,
+- formularz startu symulacji z tickerem, datami i gotówką startową,
 - pobieranie historycznych danych z Yahoo Finance,
 - symulacje portfela dzien po dniu,
-- operacje `BUY`, `SELL` i `HOLD`,
+- operacje kupna, sprzedaży i czekania,
 - endpointy JSON do startu i wykonywania akcji,
 - prosty panel tradingowy z historia transakcji i wykresem ceny.

@@ -88,7 +88,7 @@ def _baseline_prediction(state):
 
     direction = 'UP' if predicted_close > current_close else 'DOWN' if predicted_close < current_close else 'FLAT'
     return {
-        'model': 'baseline_momentum',
+        'model': 'model bazowy momentum',
         'predicted_close': f'{predicted_close:.2f}',
         'direction': direction,
         'confidence': 0.5,

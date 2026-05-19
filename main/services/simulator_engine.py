@@ -18,11 +18,11 @@ def create_simulation_state(
     initial_cash: str | int | float | Decimal,
 ) -> dict[str, Any]:
     if len(prices) < 2:
-        raise SimulationError('Symulacja wymaga co najmniej dwoch dni notowan.')
+        raise SimulationError('Symulacja wymaga co najmniej dwóch dni notowań.')
 
     cash = _to_money(initial_cash)
     if cash <= 0:
-        raise SimulationError('Gotowka poczatkowa musi byc wieksza od zera.')
+        raise SimulationError('Gotówka początkowa musi być większa od zera.')
 
     state = {
         'ticker': ticker,
@@ -45,7 +45,7 @@ def perform_action(
     shares: str | int | None = None,
 ) -> dict[str, Any]:
     if state.get('status') == 'finished':
-        raise SimulationError('Symulacja jest juz zakonczona.')
+        raise SimulationError('Symulacja jest już zakończona.')
 
     normalized_action = (action or '').strip().upper()
     if normalized_action not in VALID_ACTIONS:
@@ -60,7 +60,7 @@ def perform_action(
     if normalized_action == 'BUY':
         cost = price * share_count
         if cost > cash:
-            raise SimulationError('Brak wystarczajacej gotowki na zakup.')
+            raise SimulationError('Brak wystarczającej gotówki na zakup.')
         cash -= cost
         owned_shares += share_count
     elif normalized_action == 'SELL':
@@ -134,10 +134,10 @@ def _parse_shares(value: str | int | None, action: str) -> int:
     try:
         shares = int(value)
     except (TypeError, ValueError) as exc:
-        raise SimulationError('Liczba akcji musi byc liczba calkowita.') from exc
+        raise SimulationError('Liczba akcji musi być liczbą całkowitą.') from exc
 
     if shares <= 0:
-        raise SimulationError('Liczba akcji musi byc wieksza od zera.')
+        raise SimulationError('Liczba akcji musi być większa od zera.')
 
     return shares
 
@@ -150,7 +150,7 @@ def _to_money(value: str | int | float | Decimal) -> Decimal:
     try:
         return Decimal(str(value)).quantize(Decimal('0.01'))
     except (InvalidOperation, ValueError) as exc:
-        raise SimulationError('Niepoprawna wartosc pieniezna.') from exc
+        raise SimulationError('Niepoprawna wartość pieniężna.') from exc
 
 
 def _money_to_string(value: Decimal) -> str:
