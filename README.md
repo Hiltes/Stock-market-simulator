@@ -13,13 +13,13 @@ Webowy symulator inwestowania w akcje z predykcja kursow. Projekt jest budowany 
 docker compose up --build
 ```
 
-Aplikacja bedzie dostepna pod adresem:
+Kontener `web` automatycznie wykona migracje bazy, a aplikacja bedzie dostepna pod adresem:
 
 ```text
 http://localhost:8000/
 ```
 
-W drugim terminalu mozna wykonac migracje:
+Migracje mozna tez wykonac recznie:
 
 ```powershell
 docker compose exec web python manage.py migrate

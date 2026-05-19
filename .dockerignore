@@ -1,0 +1,9 @@
+.git
+.idea
+__pycache__
+*.pyc
+venv
+.env
+runserver.out.log
+runserver.err.log
+db.sqlite3
