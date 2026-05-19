@@ -1,4 +1,6 @@
-from django.test import SimpleTestCase
+from unittest.mock import patch
+
+from django.test import Client, SimpleTestCase, override_settings
 
 from main.services.simulator_engine import (
     SimulationError,
@@ -49,3 +51,56 @@ class SimulatorEngineTests(SimpleTestCase):
         perform_action(state, 'HOLD')
 
         self.assertEqual(state['status'], 'finished')
+
+
+@override_settings(SESSION_ENGINE='django.contrib.sessions.backends.signed_cookies')
+class SimulationApiTests(SimpleTestCase):
+    def setUp(self):
+        self.client = Client()
+
+    @patch('main.views.load_stock_prices')
+    def test_start_simulation_returns_current_day_and_portfolio(self, load_stock_prices):
+        load_stock_prices.return_value = SAMPLE_PRICES
+
+        response = self.client.post(
+            '/api/start/',
+            data={
+                'ticker': 'AAPL',
+                'start_date': '2024-01-01',
+                'end_date': '2024-01-10',
+                'initial_cash': '1000',
+            },
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['ticker'], 'AAPL')
+        self.assertEqual(payload['current_day']['date'], '2024-01-02')
+        self.assertEqual(payload['portfolio']['cash'], '1000.00')
+        self.assertEqual(payload['prediction']['model'], 'baseline_momentum')
+
+    @patch('main.views.load_stock_prices')
+    def test_action_updates_session_state(self, load_stock_prices):
+        load_stock_prices.return_value = SAMPLE_PRICES
+        self.client.post(
+            '/api/start/',
+            data={
+                'ticker': 'AAPL',
+                'start_date': '2024-01-01',
+                'end_date': '2024-01-10',
+                'initial_cash': '1000',
+            },
+            content_type='application/json',
+        )
+
+        response = self.client.post(
+            '/api/action/',
+            data={'action': 'BUY', 'shares': 2},
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['portfolio']['shares'], 2)
+        self.assertEqual(payload['last_transaction']['action'], 'BUY')
