@@ -181,13 +181,22 @@ function renderHistory(history) {
     body.innerHTML = history.map((item) => `
         <tr>
             <td>${item.date}</td>
-            <td>${item.action}</td>
+            <td>${actionLabel(item.action)}</td>
             <td>${item.shares}</td>
             <td>${money(item.price)}</td>
             <td>${money(item.cash_after)}</td>
             <td>${money(item.portfolio_value_after)}</td>
         </tr>
     `).join('');
+}
+
+function actionLabel(action) {
+    const labels = {
+        BUY: 'Kupno',
+        SELL: 'Sprzedaż',
+        HOLD: 'Czekanie',
+    };
+    return labels[action] || action;
 }
 
 function renderChart(portfolioHistory) {
