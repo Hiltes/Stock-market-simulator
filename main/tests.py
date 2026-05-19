@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.test import Client, SimpleTestCase, override_settings
 
+from main.services.ml_model import build_prediction_artifacts
 from main.services.preprocessing import FEATURE_COLUMNS, build_feature_frame
 from main.services.simulator_engine import (
     SimulationError,
@@ -46,6 +47,16 @@ class PreprocessingTests(SimpleTestCase):
         for column in FEATURE_COLUMNS + ['target_close', 'target_direction']:
             self.assertIn(column, frame.columns)
         self.assertTrue(set(frame['target_direction'].unique()).issubset({0, 1}))
+
+
+class MlModelTests(SimpleTestCase):
+    def test_prediction_artifacts_contain_metrics_and_daily_predictions(self):
+        artifacts = build_prediction_artifacts(synthetic_prices(60), n_estimators=10)
+
+        self.assertEqual(artifacts['model_name'], 'Random Forest')
+        self.assertIn('regression', artifacts['metrics'])
+        self.assertIn('classification', artifacts['metrics'])
+        self.assertGreater(len(artifacts['predictions_by_date']), 0)
 
 
 class SimulatorEngineTests(SimpleTestCase):
