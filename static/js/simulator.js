@@ -6,6 +6,8 @@ const actionMessage = document.querySelector('#action-message');
 const newSimulationButton = document.querySelector('#new-simulation-button');
 const actionButtons = document.querySelectorAll('[data-action]');
 const tradeSharesInput = document.querySelector('#trade-shares');
+const startDateInput = startForm.querySelector('[name="start_date"]');
+const endDateInput = startForm.querySelector('[name="end_date"]');
 let priceChart = null;
 
 function csrfToken() {
@@ -29,8 +31,28 @@ async function postJson(url, payload) {
 }
 
 function formPayload(form) {
+    syncDateRange();
     const data = new FormData(form);
     return Object.fromEntries(data.entries());
+}
+
+function nextDate(value) {
+    const date = new Date(`${value}T00:00:00`);
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().slice(0, 10);
+}
+
+function syncDateRange() {
+    if (!startDateInput.value) {
+        return;
+    }
+
+    const minimumEndDate = nextDate(startDateInput.value);
+    endDateInput.min = minimumEndDate;
+
+    if (!endDateInput.value || endDateInput.value <= startDateInput.value) {
+        endDateInput.value = minimumEndDate;
+    }
 }
 
 function setText(selector, value) {
@@ -139,6 +161,7 @@ function setActionsDisabled(disabled) {
 
 startForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    syncDateRange();
     startMessage.textContent = 'Pobieram dane i uruchamiam symulację...';
 
     try {
@@ -175,3 +198,7 @@ newSimulationButton.addEventListener('click', () => {
     actionMessage.textContent = '';
     setActionsDisabled(false);
 });
+
+startDateInput.addEventListener('change', syncDateRange);
+endDateInput.addEventListener('change', syncDateRange);
+syncDateRange();
