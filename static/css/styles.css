@@ -182,6 +182,7 @@ button:hover {
 .decision-panel,
 .chart-section,
 .model-section,
+.summary-section,
 .history-section {
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -217,6 +218,7 @@ button:hover {
 .decision-panel,
 .chart-section,
 .model-section,
+.summary-section,
 .history-section {
     padding: 20px;
 }
@@ -309,6 +311,11 @@ button:hover {
     margin-top: 14px;
 }
 
+.summary-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin-top: 14px;
+}
+
 .table-wrap {
     overflow-x: auto;
 }
@@ -356,6 +363,7 @@ th {
 
     .metrics-grid,
     .model-metrics-grid,
+    .summary-grid,
     .trading-layout,
     .ohlc-list,
     .action-row {

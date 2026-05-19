@@ -10,6 +10,7 @@ from main.services.simulator_engine import (
     create_simulation_state,
     perform_action,
     portfolio_snapshot,
+    simulation_summary,
 )
 
 
@@ -93,6 +94,18 @@ class SimulatorEngineTests(SimpleTestCase):
         perform_action(state, 'HOLD')
 
         self.assertEqual(state['status'], 'finished')
+
+    def test_summary_compares_result_with_buy_and_hold(self):
+        state = create_simulation_state('AAPL', SAMPLE_PRICES, '1000.00')
+
+        perform_action(state, 'BUY', 2)
+        perform_action(state, 'HOLD')
+
+        summary = simulation_summary(state)
+
+        self.assertEqual(summary['transaction_count'], 2)
+        self.assertIn('buy_and_hold_value', summary)
+        self.assertIn('difference_vs_buy_and_hold', summary)
 
 
 @override_settings(SESSION_ENGINE='django.contrib.sessions.backends.signed_cookies')

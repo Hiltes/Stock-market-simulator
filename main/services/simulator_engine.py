@@ -121,7 +121,7 @@ def portfolio_snapshot(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def serialize_state(state: dict[str, Any]) -> dict[str, Any]:
-    return {
+    serialized = {
         'ticker': state['ticker'],
         'current_step': state['current_step'],
         'current_day': get_current_day(state),
@@ -129,6 +129,38 @@ def serialize_state(state: dict[str, Any]) -> dict[str, Any]:
         'history': state['history'],
         'portfolio_history': state['portfolio_history'],
         'finished': state['status'] == 'finished',
+    }
+    if serialized['finished']:
+        serialized['summary'] = simulation_summary(state)
+    return serialized
+
+
+def simulation_summary(state: dict[str, Any]) -> dict[str, Any]:
+    final_snapshot = portfolio_snapshot(state)
+    initial_cash = _to_money(state['initial_cash'])
+    first_price = _to_money(state['prices'][0]['close'])
+    final_price = _to_money(get_current_day(state)['close'])
+    buy_and_hold_shares = int(initial_cash // first_price)
+    buy_and_hold_cash = initial_cash - Decimal(buy_and_hold_shares) * first_price
+    buy_and_hold_value = _portfolio_value(buy_and_hold_cash, buy_and_hold_shares, final_price)
+    action_counts = {
+        'BUY': 0,
+        'SELL': 0,
+        'HOLD': 0,
+    }
+    for transaction in state.get('history', []):
+        action_counts[transaction['action']] = action_counts.get(transaction['action'], 0) + 1
+
+    final_value = _to_money(final_snapshot['portfolio_value'])
+    return {
+        'final_date': final_snapshot['date'],
+        'final_portfolio_value': final_snapshot['portfolio_value'],
+        'total_profit_loss': final_snapshot['profit_loss'],
+        'transaction_count': len(state.get('history', [])),
+        'action_counts': action_counts,
+        'buy_and_hold_value': _money_to_string(buy_and_hold_value),
+        'buy_and_hold_profit_loss': _money_to_string(buy_and_hold_value - initial_cash),
+        'difference_vs_buy_and_hold': _money_to_string(final_value - buy_and_hold_value),
     }
 
 

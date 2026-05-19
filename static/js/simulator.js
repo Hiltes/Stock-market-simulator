@@ -93,11 +93,32 @@ function renderState(state) {
 
     renderHistory(state.history);
     renderChart(state.portfolio_history);
+    renderSummary(state.summary);
     setActionsDisabled(state.finished);
 
     if (state.finished) {
         actionMessage.textContent = 'Symulacja zakończona. Możesz uruchomić nową.';
     }
+}
+
+function renderSummary(summary) {
+    const summarySection = document.querySelector('#summary-section');
+    if (!summary) {
+        summarySection.classList.add('is-hidden');
+        return;
+    }
+
+    summarySection.classList.remove('is-hidden');
+    setText('#summary-final-date', summary.final_date);
+    setText('#summary-final-value', money(summary.final_portfolio_value));
+    setText('#summary-profit-loss', money(summary.total_profit_loss));
+    setText('#summary-transaction-count', summary.transaction_count);
+    setText('#summary-buy-hold', money(summary.buy_and_hold_value));
+    setText('#summary-difference', money(summary.difference_vs_buy_and_hold));
+    setText(
+        '#summary-actions',
+        `Kupno: ${summary.action_counts.BUY}, sprzedaż: ${summary.action_counts.SELL}, czekanie: ${summary.action_counts.HOLD}`,
+    );
 }
 
 function renderPrediction(prediction) {
