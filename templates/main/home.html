@@ -3,7 +3,9 @@
 {% block title %}Start symulacji | Stock Market Simulator{% endblock %}
 
 {% block content %}
-<section class="start-layout">
+{% load static %}
+
+<section class="start-layout" id="start-section">
     <div class="intro">
         <p class="eyebrow">Symulator inwestowania</p>
         <h1>Przejdz przez dane gieldowe dzien po dniu.</h1>
@@ -13,7 +15,7 @@
         </p>
     </div>
 
-    <form class="start-form" id="simulation-start-form" action="{% url 'main:home' %}" method="post">
+    <form class="start-form" id="simulation-start-form" action="{% url 'main:api_start_simulation' %}" method="post">
         {% csrf_token %}
         <label>
             Ticker
@@ -41,7 +43,117 @@
         </label>
 
         <button type="submit">Start symulacji</button>
-        <p class="form-note">Panel tradingowy zostanie podpiety do API w kolejnych etapach.</p>
+        <p class="form-note" id="start-message">Pobieranie danych moze potrwac kilka sekund.</p>
     </form>
 </section>
+
+<section class="trading-panel is-hidden" id="trading-panel" aria-live="polite">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Panel tradingowy</p>
+            <h2 id="panel-title">Symulacja</h2>
+        </div>
+        <button type="button" class="secondary-button" id="new-simulation-button">Nowa symulacja</button>
+    </div>
+
+    <div class="metrics-grid">
+        <article class="metric">
+            <span>Data</span>
+            <strong id="current-date">-</strong>
+        </article>
+        <article class="metric">
+            <span>Cena zamkniecia</span>
+            <strong id="current-close">-</strong>
+        </article>
+        <article class="metric">
+            <span>Gotowka</span>
+            <strong id="cash">-</strong>
+        </article>
+        <article class="metric">
+            <span>Akcje</span>
+            <strong id="shares">-</strong>
+        </article>
+        <article class="metric">
+            <span>Wartosc portfela</span>
+            <strong id="portfolio-value">-</strong>
+        </article>
+        <article class="metric">
+            <span>Zysk / strata</span>
+            <strong id="profit-loss">-</strong>
+        </article>
+    </div>
+
+    <div class="trading-layout">
+        <section class="market-data">
+            <div class="section-heading">
+                <h3>Dane dnia</h3>
+            </div>
+            <dl class="ohlc-list">
+                <div><dt>Open</dt><dd id="day-open">-</dd></div>
+                <div><dt>High</dt><dd id="day-high">-</dd></div>
+                <div><dt>Low</dt><dd id="day-low">-</dd></div>
+                <div><dt>Close</dt><dd id="day-close">-</dd></div>
+                <div><dt>Volume</dt><dd id="day-volume">-</dd></div>
+            </dl>
+
+            <div class="prediction-box">
+                <span>Predykcja bazowa</span>
+                <strong id="prediction">-</strong>
+                <small id="prediction-details">-</small>
+            </div>
+        </section>
+
+        <section class="decision-panel">
+            <div class="section-heading">
+                <h3>Decyzja</h3>
+            </div>
+            <label>
+                Liczba akcji
+                <input type="number" id="trade-shares" min="1" step="1" value="1">
+            </label>
+            <div class="action-row">
+                <button type="button" data-action="BUY">Kup</button>
+                <button type="button" data-action="SELL" class="secondary-button">Sprzedaj</button>
+                <button type="button" data-action="HOLD" class="secondary-button">Czekaj</button>
+            </div>
+            <p class="form-note" id="action-message"></p>
+        </section>
+    </div>
+
+    <section class="chart-section">
+        <div class="section-heading">
+            <h3>Odkryty kurs zamkniecia</h3>
+        </div>
+        <div class="chart-frame">
+            <canvas id="price-chart"></canvas>
+        </div>
+    </section>
+
+    <section class="history-section">
+        <div class="section-heading">
+            <h3>Historia decyzji</h3>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Akcja</th>
+                        <th>Akcje</th>
+                        <th>Cena</th>
+                        <th>Gotowka po</th>
+                        <th>Wartosc po</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="6">Brak decyzji.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/simulator.js' %}"></script>
 {% endblock %}

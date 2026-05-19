@@ -128,11 +128,182 @@ button:hover {
     background: var(--accent-dark);
 }
 
+.secondary-button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+}
+
+.secondary-button:hover {
+    background: var(--panel-soft);
+}
+
 .form-note {
     margin: 0;
     color: var(--muted);
     font-size: 0.86rem;
     line-height: 1.45;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
+.trading-panel {
+    display: grid;
+    gap: 24px;
+}
+
+.panel-heading,
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.panel-heading h2,
+.section-heading h3 {
+    margin: 0;
+}
+
+.panel-heading h2 {
+    font-size: 2rem;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.metric,
+.market-data,
+.decision-panel,
+.chart-section,
+.history-section {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+}
+
+.metric {
+    display: grid;
+    gap: 8px;
+    min-height: 96px;
+    padding: 16px;
+}
+
+.metric span,
+.prediction-box span {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.metric strong {
+    font-size: 1.28rem;
+}
+
+.trading-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 16px;
+}
+
+.market-data,
+.decision-panel,
+.chart-section,
+.history-section {
+    padding: 20px;
+}
+
+.ohlc-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.ohlc-list div {
+    padding: 12px;
+    border-radius: 6px;
+    background: var(--panel-soft);
+}
+
+.ohlc-list dt {
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.ohlc-list dd {
+    margin: 0;
+    font-weight: 700;
+}
+
+.prediction-box {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    border-left: 4px solid var(--accent);
+    background: #f8fbf9;
+}
+
+.prediction-box strong {
+    font-size: 1.35rem;
+}
+
+.prediction-box small {
+    color: var(--muted);
+}
+
+.action-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.chart-frame {
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    white-space: nowrap;
+}
+
+th {
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+}
+
+.is-negative {
+    color: var(--danger);
+}
+
+.is-positive {
+    color: var(--accent);
 }
 
 @media (max-width: 820px) {
@@ -145,6 +316,13 @@ button:hover {
     }
 
     .start-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics-grid,
+    .trading-layout,
+    .ohlc-list,
+    .action-row {
         grid-template-columns: 1fr;
     }
 
