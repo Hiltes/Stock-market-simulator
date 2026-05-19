@@ -37,8 +37,9 @@ function formPayload(form) {
 }
 
 function nextDate(value) {
-    const date = new Date(`${value}T00:00:00`);
-    date.setDate(date.getDate() + 1);
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + 1);
     return date.toISOString().slice(0, 10);
 }
 
@@ -53,6 +54,10 @@ function syncDateRange() {
     if (!endDateInput.value || endDateInput.value <= startDateInput.value) {
         endDateInput.value = minimumEndDate;
     }
+}
+
+function scheduleDateRangeSync() {
+    window.setTimeout(syncDateRange, 0);
 }
 
 function setText(selector, value) {
@@ -321,6 +326,8 @@ newSimulationButton.addEventListener('click', () => {
     setActionsDisabled(false);
 });
 
-startDateInput.addEventListener('change', syncDateRange);
-endDateInput.addEventListener('change', syncDateRange);
+['change', 'input', 'blur', 'keyup'].forEach((eventName) => {
+    startDateInput.addEventListener(eventName, scheduleDateRangeSync);
+    endDateInput.addEventListener(eventName, scheduleDateRangeSync);
+});
 syncDateRange();
