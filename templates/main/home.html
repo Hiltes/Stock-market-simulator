@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Start symulacji | Stock Market Simulator{% endblock %}
+
+{% block content %}
+<section class="app-shell">
+    <div class="intro-panel">
+        <p class="eyebrow">Eksploracja danych</p>
+        <h1>Symulator inwestowania z predykcją kursów akcji</h1>
+        <p class="lead">
+            Wybierz spółkę i zakres danych, a aplikacja przeprowadzi symulację inwestowania dzień po dniu.
+            Użytkownik podejmie decyzje kupna, sprzedaży albo oczekiwania, a system policzy wpływ decyzji na portfel.
+        </p>
+    </div>
+
+    <form class="start-form" method="post" action="#">
+        {% csrf_token %}
+        <div class="form-grid">
+            <label>
+                <span>Spółka</span>
+                <select name="ticker">
+                    <option value="AAPL">AAPL - Apple</option>
+                    <option value="TSLA">TSLA - Tesla</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Data od</span>
+                <input type="date" name="start_date" value="2022-01-01">
+            </label>
+
+            <label>
+                <span>Data do</span>
+                <input type="date" name="end_date" value="2024-01-01">
+            </label>
+
+            <label>
+                <span>Gotówka startowa</span>
+                <input type="number" name="initial_cash" min="100" step="100" value="10000">
+            </label>
+        </div>
+
+        <button type="button" disabled>Start symulacji</button>
+        <p class="form-note">Formularz jest przygotowany pod pierwszy endpoint API. W kolejnym kroku podpinamy dane i silnik symulacji.</p>
+    </form>
+
+    <section class="milestones" aria-label="Najbliższe kroki">
+        <article>
+            <strong>1</strong>
+            <h2>Dane</h2>
+            <p>Pobranie notowań z Yahoo Finance dla wybranej spółki i zakresu dat.</p>
+        </article>
+        <article>
+            <strong>2</strong>
+            <h2>Symulacja</h2>
+            <p>Obsługa decyzji buy, sell i hold oraz przeliczanie wartości portfela.</p>
+        </article>
+        <article>
+            <strong>3</strong>
+            <h2>Predykcja</h2>
+            <p>Model ML będzie przewidywał cenę lub kierunek zmiany kursu.</p>
+        </article>
+    </section>
+</section>
+{% endblock %}
