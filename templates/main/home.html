@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Start symulacji | Stock Market Simulator{% endblock %}
+
+{% block content %}
+<section class="start-layout">
+    <div class="intro">
+        <p class="eyebrow">Symulator inwestowania</p>
+        <h1>Przejdz przez dane gieldowe dzien po dniu.</h1>
+        <p class="lead">
+            Wybierz spolke, zakres dat i kapital poczatkowy. Aplikacja pobierze rzeczywiste dane
+            historyczne, a potem pozwoli podejmowac decyzje kupna, sprzedazy albo czekania.
+        </p>
+    </div>
+
+    <form class="start-form" id="simulation-start-form" action="{% url 'main:home' %}" method="post">
+        {% csrf_token %}
+        <label>
+            Ticker
+            <select name="ticker" required>
+                <option value="AAPL">AAPL</option>
+                <option value="TSLA">TSLA</option>
+                <option value="MSFT">MSFT</option>
+                <option value="NVDA">NVDA</option>
+            </select>
+        </label>
+
+        <label>
+            Data poczatkowa
+            <input type="date" name="start_date" value="2021-01-01" required>
+        </label>
+
+        <label>
+            Data koncowa
+            <input type="date" name="end_date" value="2024-01-01" required>
+        </label>
+
+        <label>
+            Gotowka poczatkowa
+            <input type="number" name="initial_cash" value="10000" min="100" step="100" required>
+        </label>
+
+        <button type="submit">Start symulacji</button>
+        <p class="form-note">Panel tradingowy zostanie podpiety do API w kolejnych etapach.</p>
+    </form>
+</section>
+{% endblock %}
