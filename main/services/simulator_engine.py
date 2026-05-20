@@ -9,7 +9,10 @@ VALID_ACTIONS = {'BUY', 'SELL', 'HOLD'}
 
 
 class SimulationError(ValueError):
-    pass
+    def __init__(self, message: str, code: str = 'simulation_error', status: int = 400):
+        super().__init__(message)
+        self.code = code
+        self.status = status
 
 
 def create_simulation_state(
@@ -18,11 +21,17 @@ def create_simulation_state(
     initial_cash: str | int | float | Decimal,
 ) -> dict[str, Any]:
     if len(prices) < 2:
-        raise SimulationError('Symulacja wymaga co najmniej dwóch dni notowań.')
+        raise SimulationError(
+            'Symulacja wymaga co najmniej dwoch dni notowan.',
+            code='not_enough_data',
+        )
 
     cash = _to_money(initial_cash)
     if cash <= 0:
-        raise SimulationError('Gotówka początkowa musi być większa od zera.')
+        raise SimulationError(
+            'Gotowka poczatkowa musi byc wieksza od zera.',
+            code='invalid_initial_cash',
+        )
 
     state = {
         'ticker': ticker,
@@ -45,11 +54,15 @@ def perform_action(
     shares: str | int | None = None,
 ) -> dict[str, Any]:
     if state.get('status') == 'finished':
-        raise SimulationError('Symulacja jest już zakończona.')
+        raise SimulationError(
+            'Symulacja jest juz zakonczona.',
+            code='simulation_finished',
+            status=409,
+        )
 
     normalized_action = (action or '').strip().upper()
     if normalized_action not in VALID_ACTIONS:
-        raise SimulationError('Niepoprawna akcja.')
+        raise SimulationError('Niepoprawna akcja.', code='invalid_action')
 
     share_count = _parse_shares(shares, normalized_action)
     current_day = get_current_day(state)
@@ -60,12 +73,18 @@ def perform_action(
     if normalized_action == 'BUY':
         cost = price * share_count
         if cost > cash:
-            raise SimulationError('Brak wystarczającej gotówki na zakup.')
+            raise SimulationError(
+                'Brak wystarczajacej gotowki na zakup.',
+                code='insufficient_cash',
+            )
         cash -= cost
         owned_shares += share_count
     elif normalized_action == 'SELL':
         if share_count > owned_shares:
-            raise SimulationError('Nie masz tylu akcji do sprzedazy.')
+            raise SimulationError(
+                'Nie masz tylu akcji do sprzedazy.',
+                code='insufficient_shares',
+            )
         cash += price * share_count
         owned_shares -= share_count
 
@@ -121,12 +140,21 @@ def portfolio_snapshot(state: dict[str, Any]) -> dict[str, Any]:
 
 
 def serialize_state(state: dict[str, Any]) -> dict[str, Any]:
+    current_day = get_current_day(state)
+    portfolio = portfolio_snapshot(state)
     serialized = {
         'ticker': state['ticker'],
+        'total_days': len(state['prices']),
         'current_step': state['current_step'],
-        'current_day': get_current_day(state),
-        'portfolio': portfolio_snapshot(state),
+        'current_day': current_day,
+        'ohlcv': current_day,
+        'portfolio': portfolio,
+        'cash': portfolio['cash'],
+        'shares': portfolio['shares'],
+        'portfolio_value': portfolio['portfolio_value'],
+        'profit_loss': portfolio['profit_loss'],
         'history': state['history'],
+        'transaction_history': state['history'],
         'portfolio_history': state['portfolio_history'],
         'finished': state['status'] == 'finished',
     }
@@ -171,10 +199,16 @@ def _parse_shares(value: str | int | None, action: str) -> int:
     try:
         shares = int(value)
     except (TypeError, ValueError) as exc:
-        raise SimulationError('Liczba akcji musi być liczbą całkowitą.') from exc
+        raise SimulationError(
+            'Liczba akcji musi byc liczba calkowita.',
+            code='invalid_shares',
+        ) from exc
 
     if shares <= 0:
-        raise SimulationError('Liczba akcji musi być większa od zera.')
+        raise SimulationError(
+            'Liczba akcji musi byc wieksza od zera.',
+            code='invalid_shares',
+        )
 
     return shares
 
@@ -187,7 +221,10 @@ def _to_money(value: str | int | float | Decimal) -> Decimal:
     try:
         return Decimal(str(value)).quantize(Decimal('0.01'))
     except (InvalidOperation, ValueError) as exc:
-        raise SimulationError('Niepoprawna wartość pieniężna.') from exc
+        raise SimulationError(
+            'Niepoprawna wartosc pieniezna.',
+            code='invalid_money',
+        ) from exc
 
 
 def _money_to_string(value: Decimal) -> str:

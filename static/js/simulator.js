@@ -318,7 +318,7 @@ actionButtons.forEach((button) => {
         const shares = action === 'HOLD' ? 0 : tradeSharesInput.value;
 
         try {
-            const state = await postJson('/api/action/', { action, shares });
+            const state = await postJson('/api/decision', { action, shares });
             actionMessage.textContent = '';
             renderState(state);
         } catch (error) {

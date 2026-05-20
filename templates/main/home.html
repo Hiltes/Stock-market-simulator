@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Start symulacji | Symulator giełdowy{% endblock %}
+{% block title %}Start symulacji | Symulator gieldowy{% endblock %}
 
 {% block content %}
 {% load static %}
@@ -8,10 +8,11 @@
 <section class="start-layout" id="start-section">
     <div class="intro">
         <p class="eyebrow">Symulator inwestowania</p>
-        <h1>Przejdź przez dane giełdowe dzień po dniu.</h1>
+        <h1>Przejdz przez dane gieldowe dzien po dniu.</h1>
         <p class="lead">
-            Wybierz spółkę, zakres dat i kapitał początkowy. Aplikacja pobierze rzeczywiste dane
-            historyczne, a potem pozwoli podejmować decyzje kupna, sprzedaży albo czekania.
+            Wybierz spolke, zakres dat, kapital poczatkowy oraz parametry modelu.
+            Aplikacja pobierze rzeczywiste dane historyczne, a potem pozwoli podejmowac
+            decyzje kupna, sprzedazy albo czekania.
         </p>
     </div>
 
@@ -28,22 +29,46 @@
         </label>
 
         <label>
-            Data początkowa
+            Data poczatkowa
             <input type="date" name="start_date" value="2021-01-01" required>
         </label>
 
         <label>
-            Data końcowa
+            Data koncowa
             <input type="date" name="end_date" value="2024-01-01" required>
         </label>
 
         <label>
-            Gotówka początkowa
+            Gotowka poczatkowa
             <input type="number" name="initial_cash" value="10000" min="100" step="100" required>
         </label>
 
+        <label>
+            Okno treningowe (dni)
+            <input
+                type="number"
+                name="training_window_days"
+                value="{{ default_training_window_days }}"
+                min="10"
+                step="1"
+                required
+            >
+        </label>
+
+        <label>
+            Liczba dni uzytych do predykcji
+            <input
+                type="number"
+                name="lookback_days"
+                value="{{ default_lookback_days }}"
+                min="2"
+                step="1"
+                required
+            >
+        </label>
+
         <button type="submit">Start symulacji</button>
-        <p class="form-note" id="start-message">Pobieranie danych może potrwać kilka sekund.</p>
+        <p class="form-note" id="start-message">Pobieranie danych moze potrwac kilka sekund.</p>
     </form>
 </section>
 
@@ -62,11 +87,11 @@
             <strong id="current-date">-</strong>
         </article>
         <article class="metric">
-            <span>Cena zamknięcia</span>
+            <span>Cena zamkniecia</span>
             <strong id="current-close">-</strong>
         </article>
         <article class="metric">
-            <span>Gotówka</span>
+            <span>Gotowka</span>
             <strong id="cash">-</strong>
         </article>
         <article class="metric">
@@ -74,7 +99,7 @@
             <strong id="shares">-</strong>
         </article>
         <article class="metric">
-            <span>Wartość portfela</span>
+            <span>Wartosc portfela</span>
             <strong id="portfolio-value">-</strong>
         </article>
         <article class="metric">
@@ -92,7 +117,7 @@
                 <div><dt>Otwarcie</dt><dd id="day-open">-</dd></div>
                 <div><dt>Maksimum</dt><dd id="day-high">-</dd></div>
                 <div><dt>Minimum</dt><dd id="day-low">-</dd></div>
-                <div><dt>Zamknięcie</dt><dd id="day-close">-</dd></div>
+                <div><dt>Zamkniecie</dt><dd id="day-close">-</dd></div>
                 <div><dt>Wolumen</dt><dd id="day-volume">-</dd></div>
             </dl>
 
@@ -123,7 +148,7 @@
 
     <section class="chart-section">
         <div class="section-heading">
-            <h3>Odkryte dane giełdowe</h3>
+            <h3>Odkryte dane gieldowe</h3>
         </div>
         <div class="chart-frame">
             <canvas id="price-chart"></canvas>
@@ -132,7 +157,7 @@
 
     <section class="model-section">
         <div class="section-heading">
-            <h3>Jakość modelu</h3>
+            <h3>Jakosc modelu</h3>
             <span id="model-name">-</span>
         </div>
         <div class="metrics-grid model-metrics-grid">
@@ -172,8 +197,8 @@
                         <th>Akcja</th>
                         <th>Akcje</th>
                         <th>Cena</th>
-                        <th>Gotówka po</th>
-                        <th>Wartość po</th>
+                        <th>Gotowka po</th>
+                        <th>Wartosc po</th>
                     </tr>
                 </thead>
                 <tbody id="history-body">
@@ -189,15 +214,15 @@
         </div>
         <div class="metrics-grid summary-grid">
             <article class="metric">
-                <span>Data końcowa</span>
+                <span>Data koncowa</span>
                 <strong id="summary-final-date">-</strong>
             </article>
             <article class="metric">
-                <span>Wartość końcowa</span>
+                <span>Wartosc koncowa</span>
                 <strong id="summary-final-value">-</strong>
             </article>
             <article class="metric">
-                <span>Łączny wynik</span>
+                <span>Laczny wynik</span>
                 <strong id="summary-profit-loss">-</strong>
             </article>
             <article class="metric">
@@ -209,7 +234,7 @@
                 <strong id="summary-buy-hold">-</strong>
             </article>
             <article class="metric">
-                <span>Różnica</span>
+                <span>Roznica</span>
                 <strong id="summary-difference">-</strong>
             </article>
         </div>
@@ -219,5 +244,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=ml-rozbudowa-2"></script>
+<script src="{% static 'js/simulator.js' %}?v=ml-walk-forward-1"></script>
 {% endblock %}
