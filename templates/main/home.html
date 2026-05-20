@@ -1,65 +1,223 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Start symulacji | Stock Market Simulator{% endblock %}
+{% block title %}Start symulacji | Symulator giełdowy{% endblock %}
 
 {% block content %}
-<section class="app-shell">
-    <div class="intro-panel">
-        <p class="eyebrow">Eksploracja danych</p>
-        <h1>Symulator inwestowania z predykcją kursów akcji</h1>
+{% load static %}
+
+<section class="start-layout" id="start-section">
+    <div class="intro">
+        <p class="eyebrow">Symulator inwestowania</p>
+        <h1>Przejdź przez dane giełdowe dzień po dniu.</h1>
         <p class="lead">
-            Wybierz spółkę i zakres danych, a aplikacja przeprowadzi symulację inwestowania dzień po dniu.
-            Użytkownik podejmie decyzje kupna, sprzedaży albo oczekiwania, a system policzy wpływ decyzji na portfel.
+            Wybierz spółkę, zakres dat i kapitał początkowy. Aplikacja pobierze rzeczywiste dane
+            historyczne, a potem pozwoli podejmować decyzje kupna, sprzedaży albo czekania.
         </p>
     </div>
 
-    <form class="start-form" method="post" action="#">
+    <form class="start-form" id="simulation-start-form" action="{% url 'main:api_start_simulation' %}" method="post">
         {% csrf_token %}
-        <div class="form-grid">
-            <label>
-                <span>Spółka</span>
-                <select name="ticker">
-                    <option value="AAPL">AAPL - Apple</option>
-                    <option value="TSLA">TSLA - Tesla</option>
-                </select>
-            </label>
+        <label>
+            Ticker
+            <select name="ticker" required>
+                <option value="AAPL">AAPL</option>
+                <option value="TSLA">TSLA</option>
+                <option value="MSFT">MSFT</option>
+                <option value="NVDA">NVDA</option>
+            </select>
+        </label>
 
-            <label>
-                <span>Data od</span>
-                <input type="date" name="start_date" value="2022-01-01">
-            </label>
+        <label>
+            Data początkowa
+            <input type="date" name="start_date" value="2021-01-01" required>
+        </label>
 
-            <label>
-                <span>Data do</span>
-                <input type="date" name="end_date" value="2024-01-01">
-            </label>
+        <label>
+            Data końcowa
+            <input type="date" name="end_date" value="2024-01-01" required>
+        </label>
 
-            <label>
-                <span>Gotówka startowa</span>
-                <input type="number" name="initial_cash" min="100" step="100" value="10000">
-            </label>
-        </div>
+        <label>
+            Gotówka początkowa
+            <input type="number" name="initial_cash" value="10000" min="100" step="100" required>
+        </label>
 
-        <button type="button" disabled>Start symulacji</button>
-        <p class="form-note">Formularz jest przygotowany pod pierwszy endpoint API. W kolejnym kroku podpinamy dane i silnik symulacji.</p>
+        <button type="submit">Start symulacji</button>
+        <p class="form-note" id="start-message">Pobieranie danych może potrwać kilka sekund.</p>
     </form>
+</section>
 
-    <section class="milestones" aria-label="Najbliższe kroki">
-        <article>
-            <strong>1</strong>
-            <h2>Dane</h2>
-            <p>Pobranie notowań z Yahoo Finance dla wybranej spółki i zakresu dat.</p>
+<section class="trading-panel is-hidden" id="trading-panel" aria-live="polite">
+    <div class="panel-heading">
+        <div>
+            <p class="eyebrow">Panel tradingowy</p>
+            <h2 id="panel-title">Symulacja</h2>
+        </div>
+        <button type="button" class="secondary-button" id="new-simulation-button">Nowa symulacja</button>
+    </div>
+
+    <div class="metrics-grid">
+        <article class="metric">
+            <span>Data</span>
+            <strong id="current-date">-</strong>
         </article>
-        <article>
-            <strong>2</strong>
-            <h2>Symulacja</h2>
-            <p>Obsługa decyzji buy, sell i hold oraz przeliczanie wartości portfela.</p>
+        <article class="metric">
+            <span>Cena zamknięcia</span>
+            <strong id="current-close">-</strong>
         </article>
-        <article>
-            <strong>3</strong>
-            <h2>Predykcja</h2>
-            <p>Model ML będzie przewidywał cenę lub kierunek zmiany kursu.</p>
+        <article class="metric">
+            <span>Gotówka</span>
+            <strong id="cash">-</strong>
         </article>
+        <article class="metric">
+            <span>Akcje</span>
+            <strong id="shares">-</strong>
+        </article>
+        <article class="metric">
+            <span>Wartość portfela</span>
+            <strong id="portfolio-value">-</strong>
+        </article>
+        <article class="metric">
+            <span>Zysk / strata</span>
+            <strong id="profit-loss">-</strong>
+        </article>
+    </div>
+
+    <div class="trading-layout">
+        <section class="market-data">
+            <div class="section-heading">
+                <h3>Dane dnia</h3>
+            </div>
+            <dl class="ohlc-list">
+                <div><dt>Otwarcie</dt><dd id="day-open">-</dd></div>
+                <div><dt>Maksimum</dt><dd id="day-high">-</dd></div>
+                <div><dt>Minimum</dt><dd id="day-low">-</dd></div>
+                <div><dt>Zamknięcie</dt><dd id="day-close">-</dd></div>
+                <div><dt>Wolumen</dt><dd id="day-volume">-</dd></div>
+            </dl>
+
+            <div class="prediction-box" id="prediction-box">
+                <span>Predykcja modelu</span>
+                <strong id="prediction">-</strong>
+                <em id="prediction-change">-</em>
+                <small id="prediction-details">-</small>
+            </div>
+        </section>
+
+        <section class="decision-panel">
+            <div class="section-heading">
+                <h3>Decyzja</h3>
+            </div>
+            <label>
+                Liczba akcji
+                <input type="number" id="trade-shares" min="1" step="1" value="1">
+            </label>
+            <div class="action-row">
+                <button type="button" data-action="BUY">Kup</button>
+                <button type="button" data-action="SELL" class="secondary-button">Sprzedaj</button>
+                <button type="button" data-action="HOLD" class="secondary-button">Czekaj</button>
+            </div>
+            <p class="form-note" id="action-message"></p>
+        </section>
+    </div>
+
+    <section class="chart-section">
+        <div class="section-heading">
+            <h3>Odkryte dane giełdowe</h3>
+        </div>
+        <div class="chart-frame">
+            <canvas id="price-chart"></canvas>
+        </div>
+    </section>
+
+    <section class="model-section">
+        <div class="section-heading">
+            <h3>Jakość modelu</h3>
+            <span id="model-name">-</span>
+        </div>
+        <div class="metrics-grid model-metrics-grid">
+            <article class="metric">
+                <span>MAE</span>
+                <strong id="metric-mae">-</strong>
+            </article>
+            <article class="metric">
+                <span>RMSE</span>
+                <strong id="metric-rmse">-</strong>
+            </article>
+            <article class="metric">
+                <span>R2</span>
+                <strong id="metric-r2">-</strong>
+            </article>
+            <article class="metric">
+                <span>Accuracy</span>
+                <strong id="metric-accuracy">-</strong>
+            </article>
+            <article class="metric">
+                <span>F1</span>
+                <strong id="metric-f1">-</strong>
+            </article>
+        </div>
+        <p class="form-note" id="model-warning"></p>
+    </section>
+
+    <section class="history-section">
+        <div class="section-heading">
+            <h3>Historia decyzji</h3>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Akcja</th>
+                        <th>Akcje</th>
+                        <th>Cena</th>
+                        <th>Gotówka po</th>
+                        <th>Wartość po</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="6">Brak decyzji.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="summary-section is-hidden" id="summary-section">
+        <div class="section-heading">
+            <h3>Podsumowanie symulacji</h3>
+        </div>
+        <div class="metrics-grid summary-grid">
+            <article class="metric">
+                <span>Data końcowa</span>
+                <strong id="summary-final-date">-</strong>
+            </article>
+            <article class="metric">
+                <span>Wartość końcowa</span>
+                <strong id="summary-final-value">-</strong>
+            </article>
+            <article class="metric">
+                <span>Łączny wynik</span>
+                <strong id="summary-profit-loss">-</strong>
+            </article>
+            <article class="metric">
+                <span>Liczba decyzji</span>
+                <strong id="summary-transaction-count">-</strong>
+            </article>
+            <article class="metric">
+                <span>Kup i trzymaj</span>
+                <strong id="summary-buy-hold">-</strong>
+            </article>
+            <article class="metric">
+                <span>Różnica</span>
+                <strong id="summary-difference">-</strong>
+            </article>
+        </div>
+        <p class="form-note" id="summary-actions">-</p>
     </section>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/simulator.js' %}?v=ml-rozbudowa-2"></script>
 {% endblock %}

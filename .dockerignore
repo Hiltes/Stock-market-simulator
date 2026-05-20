@@ -1,8 +1,9 @@
 .git
-venv
-.venv
+.idea
 __pycache__
 *.pyc
+venv
 .env
-.idea
-postgres_data
+runserver.out.log
+runserver.err.log
+db.sqlite3

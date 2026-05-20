@@ -1,84 +1,93 @@
-from dataclasses import dataclass
-from datetime import date
-import re
+from __future__ import annotations
 
-import pandas as pd
-import yfinance as yf
-
-
-TICKER_PATTERN = re.compile(r"^[A-Z0-9.-]{1,12}$")
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Any
 
 
-@dataclass(frozen=True)
-class StockPrice:
-    date: date
-    open: float
-    high: float
-    low: float
-    close: float
-    volume: int
+SUPPORTED_TICKERS = {'AAPL', 'TSLA', 'MSFT', 'NVDA'}
 
 
-def fetch_stock_prices(ticker: str, start_date: str, end_date: str) -> list[StockPrice]:
-    normalized_ticker = normalize_ticker(ticker)
-    _validate_date_range(start_date, end_date)
+class StockDataError(ValueError):
+    pass
+
+
+def parse_date(value: str, field_name: str) -> date:
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    except (TypeError, ValueError) as exc:
+        raise StockDataError(f'Niepoprawna data w polu {field_name}.') from exc
+
+
+def validate_stock_request(ticker: str, start_date: str, end_date: str) -> tuple[str, date, date]:
+    normalized_ticker = (ticker or '').strip().upper()
+    if normalized_ticker not in SUPPORTED_TICKERS:
+        raise StockDataError('Nieobsługiwany ticker.')
+
+    parsed_start = parse_date(start_date, 'start_date')
+    parsed_end = parse_date(end_date, 'end_date')
+
+    if parsed_start >= parsed_end:
+        raise StockDataError('Data początkowa musi być wcześniejsza niż końcowa.')
+
+    return normalized_ticker, parsed_start, parsed_end
+
+
+def load_stock_prices(ticker: str, start_date: str, end_date: str) -> list[dict[str, Any]]:
+    normalized_ticker, parsed_start, parsed_end = validate_stock_request(ticker, start_date, end_date)
+
+    try:
+        import yfinance as yf
+    except ImportError as exc:
+        raise StockDataError('Brak biblioteki yfinance. Zainstaluj zależności z requirements.txt.') from exc
 
     frame = yf.download(
         normalized_ticker,
-        start=start_date,
-        end=end_date,
+        start=parsed_start.isoformat(),
+        end=parsed_end.isoformat(),
         auto_adjust=False,
         progress=False,
     )
 
     if frame.empty:
-        raise ValueError("No stock data returned for selected ticker and date range.")
+        raise StockDataError('Nie znaleziono danych dla podanego zakresu.')
 
-    return stock_prices_from_frame(frame)
+    if hasattr(frame.columns, 'nlevels') and frame.columns.nlevels > 1:
+        frame.columns = frame.columns.get_level_values(0)
 
-
-def normalize_ticker(ticker: str) -> str:
-    normalized = ticker.strip().upper()
-    if not TICKER_PATTERN.match(normalized):
-        raise ValueError("Ticker contains unsupported characters.")
-    return normalized
-
-
-def stock_prices_from_frame(frame: pd.DataFrame) -> list[StockPrice]:
-    data = frame.copy()
-    if isinstance(data.columns, pd.MultiIndex):
-        data.columns = data.columns.get_level_values(0)
-
-    required_columns = ["Open", "High", "Low", "Close", "Volume"]
-    missing_columns = [column for column in required_columns if column not in data.columns]
+    required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+    missing_columns = [column for column in required_columns if column not in frame.columns]
     if missing_columns:
-        raise ValueError(f"Missing required stock columns: {', '.join(missing_columns)}")
+        raise StockDataError('Pobrane dane nie zawierają wymaganych kolumn.')
 
-    data = data.reset_index()
-    data = data.dropna(subset=required_columns)
+    frame = frame.reset_index()
+    frame = frame.dropna(subset=required_columns)
+    frame = frame.sort_values('Date')
+
     prices = []
-
-    for row in data.itertuples(index=False):
+    for row in frame.to_dict(orient='records'):
         prices.append(
-            StockPrice(
-                date=pd.Timestamp(getattr(row, "Date")).date(),
-                open=round(float(getattr(row, "Open")), 2),
-                high=round(float(getattr(row, "High")), 2),
-                low=round(float(getattr(row, "Low")), 2),
-                close=round(float(getattr(row, "Close")), 2),
-                volume=int(getattr(row, "Volume")),
-            )
+            {
+                'date': _date_to_iso(row['Date']),
+                'open': _to_decimal_string(row['Open']),
+                'high': _to_decimal_string(row['High']),
+                'low': _to_decimal_string(row['Low']),
+                'close': _to_decimal_string(row['Close']),
+                'volume': int(row['Volume']),
+            }
         )
 
-    if not prices:
-        raise ValueError("Stock data has no complete OHLCV rows.")
+    if len(prices) < 2:
+        raise StockDataError('Zakres musi zawierać co najmniej dwa dni notowań.')
 
     return prices
 
 
-def _validate_date_range(start_date: str, end_date: str) -> None:
-    start = pd.Timestamp(start_date).date()
-    end = pd.Timestamp(end_date).date()
+def _date_to_iso(value: Any) -> str:
+    if hasattr(value, 'date'):
+        return value.date().isoformat()
+    return str(value)
 
-    if start >= end:
-        raise ValueError("Start date must be earlier than end date.")
+
+def _to_decimal_string(value: Any) -> str:
+    return str(Decimal(str(value)).quantize(Decimal('0.01')))

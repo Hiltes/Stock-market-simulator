@@ -4,12 +4,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Stock Market Simulator{% endblock %}</title>
+    <title>{% block title %}Symulator giełdowy{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <main>
+    <header class="app-header">
+        <a class="brand" href="{% url 'main:home' %}">Symulator giełdowy</a>
+    </header>
+    <main class="page-shell">
         {% block content %}{% endblock %}
     </main>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

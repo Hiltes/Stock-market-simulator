@@ -1,96 +1,194 @@
-from dataclasses import dataclass, field
-from datetime import date
+from __future__ import annotations
+
+from copy import deepcopy
+from decimal import Decimal, InvalidOperation
+from typing import Any
 
 
-@dataclass(frozen=True)
-class Transaction:
-    action: str
-    trade_date: date | str
-    shares: int
-    price: float
-    cash_after: float
-    portfolio_value_after: float
+VALID_ACTIONS = {'BUY', 'SELL', 'HOLD'}
 
 
-@dataclass
-class Portfolio:
-    initial_cash: float = 10000.0
-    cash: float = field(init=False)
-    shares: int = 0
-    transactions: list[Transaction] = field(default_factory=list)
+class SimulationError(ValueError):
+    pass
 
-    def __post_init__(self):
-        if self.initial_cash <= 0:
-            raise ValueError("Initial cash must be greater than zero.")
-        self.cash = round(float(self.initial_cash), 2)
 
-    def value(self, current_price: float) -> float:
-        self._validate_price(current_price)
-        return round(self.cash + self.shares * current_price, 2)
+def create_simulation_state(
+    ticker: str,
+    prices: list[dict[str, Any]],
+    initial_cash: str | int | float | Decimal,
+) -> dict[str, Any]:
+    if len(prices) < 2:
+        raise SimulationError('Symulacja wymaga co najmniej dwóch dni notowań.')
 
-    def profit_loss(self, current_price: float) -> float:
-        return round(self.value(current_price) - self.initial_cash, 2)
+    cash = _to_money(initial_cash)
+    if cash <= 0:
+        raise SimulationError('Gotówka początkowa musi być większa od zera.')
 
-    def buy(self, shares: int, current_price: float, trade_date: date | str) -> Transaction:
-        self._validate_shares(shares)
-        self._validate_price(current_price)
-        cost = round(shares * current_price, 2)
+    state = {
+        'ticker': ticker,
+        'prices': deepcopy(prices),
+        'initial_cash': _money_to_string(cash),
+        'cash': _money_to_string(cash),
+        'shares': 0,
+        'current_step': 0,
+        'status': 'running',
+        'history': [],
+        'portfolio_history': [],
+    }
+    state['portfolio_history'].append(portfolio_snapshot(state))
+    return state
 
-        if cost > self.cash:
-            raise ValueError("Not enough cash to buy requested shares.")
 
-        self.cash = round(self.cash - cost, 2)
-        self.shares += shares
-        return self._record("BUY", trade_date, shares, current_price)
+def perform_action(
+    state: dict[str, Any],
+    action: str,
+    shares: str | int | None = None,
+) -> dict[str, Any]:
+    if state.get('status') == 'finished':
+        raise SimulationError('Symulacja jest już zakończona.')
 
-    def sell(self, shares: int, current_price: float, trade_date: date | str) -> Transaction:
-        self._validate_shares(shares)
-        self._validate_price(current_price)
+    normalized_action = (action or '').strip().upper()
+    if normalized_action not in VALID_ACTIONS:
+        raise SimulationError('Niepoprawna akcja.')
 
-        if shares > self.shares:
-            raise ValueError("Not enough shares to sell.")
+    share_count = _parse_shares(shares, normalized_action)
+    current_day = get_current_day(state)
+    price = _to_money(current_day['close'])
+    cash = _to_money(state['cash'])
+    owned_shares = int(state['shares'])
 
-        self.cash = round(self.cash + shares * current_price, 2)
-        self.shares -= shares
-        return self._record("SELL", trade_date, shares, current_price)
+    if normalized_action == 'BUY':
+        cost = price * share_count
+        if cost > cash:
+            raise SimulationError('Brak wystarczającej gotówki na zakup.')
+        cash -= cost
+        owned_shares += share_count
+    elif normalized_action == 'SELL':
+        if share_count > owned_shares:
+            raise SimulationError('Nie masz tylu akcji do sprzedazy.')
+        cash += price * share_count
+        owned_shares -= share_count
 
-    def hold(self, current_price: float, trade_date: date | str) -> Transaction:
-        self._validate_price(current_price)
-        return self._record("HOLD", trade_date, 0, current_price)
+    state['cash'] = _money_to_string(cash)
+    state['shares'] = owned_shares
 
-    def snapshot(self, current_price: float) -> dict:
-        return {
-            "cash": self.cash,
-            "shares": self.shares,
-            "current_price": round(float(current_price), 2),
-            "portfolio_value": self.value(current_price),
-            "profit_loss": self.profit_loss(current_price),
-        }
+    transaction = {
+        'date': current_day['date'],
+        'action': normalized_action,
+        'shares': int(share_count),
+        'price': _money_to_string(price),
+        'cash_after': state['cash'],
+        'portfolio_value_after': _money_to_string(_portfolio_value(cash, owned_shares, price)),
+    }
+    state['history'].append(transaction)
 
-    def _record(
-        self,
-        action: str,
-        trade_date: date | str,
-        shares: int,
-        current_price: float,
-    ) -> Transaction:
-        transaction = Transaction(
-            action=action,
-            trade_date=trade_date,
-            shares=shares,
-            price=round(float(current_price), 2),
-            cash_after=self.cash,
-            portfolio_value_after=self.value(current_price),
-        )
-        self.transactions.append(transaction)
-        return transaction
+    next_step = int(state['current_step']) + 1
+    if next_step >= len(state['prices']) - 1:
+        state['current_step'] = len(state['prices']) - 1
+        state['status'] = 'finished'
+    else:
+        state['current_step'] = next_step
 
-    @staticmethod
-    def _validate_shares(shares: int) -> None:
-        if not isinstance(shares, int) or shares <= 0:
-            raise ValueError("Shares must be a positive integer.")
+    state['portfolio_history'].append(portfolio_snapshot(state))
+    return state
 
-    @staticmethod
-    def _validate_price(current_price: float) -> None:
-        if current_price <= 0:
-            raise ValueError("Current price must be greater than zero.")
+
+def get_current_day(state: dict[str, Any]) -> dict[str, Any]:
+    return state['prices'][int(state['current_step'])]
+
+
+def portfolio_snapshot(state: dict[str, Any]) -> dict[str, Any]:
+    current_day = get_current_day(state)
+    cash = _to_money(state['cash'])
+    shares = int(state['shares'])
+    price = _to_money(current_day['close'])
+    value = _portfolio_value(cash, shares, price)
+    initial_cash = _to_money(state['initial_cash'])
+
+    return {
+        'date': current_day['date'],
+        'cash': _money_to_string(cash),
+        'shares': shares,
+        'stock_price': _money_to_string(price),
+        'open': current_day['open'],
+        'high': current_day['high'],
+        'low': current_day['low'],
+        'close': current_day['close'],
+        'volume': current_day['volume'],
+        'portfolio_value': _money_to_string(value),
+        'profit_loss': _money_to_string(value - initial_cash),
+    }
+
+
+def serialize_state(state: dict[str, Any]) -> dict[str, Any]:
+    serialized = {
+        'ticker': state['ticker'],
+        'current_step': state['current_step'],
+        'current_day': get_current_day(state),
+        'portfolio': portfolio_snapshot(state),
+        'history': state['history'],
+        'portfolio_history': state['portfolio_history'],
+        'finished': state['status'] == 'finished',
+    }
+    if serialized['finished']:
+        serialized['summary'] = simulation_summary(state)
+    return serialized
+
+
+def simulation_summary(state: dict[str, Any]) -> dict[str, Any]:
+    final_snapshot = portfolio_snapshot(state)
+    initial_cash = _to_money(state['initial_cash'])
+    first_price = _to_money(state['prices'][0]['close'])
+    final_price = _to_money(get_current_day(state)['close'])
+    buy_and_hold_shares = int(initial_cash // first_price)
+    buy_and_hold_cash = initial_cash - Decimal(buy_and_hold_shares) * first_price
+    buy_and_hold_value = _portfolio_value(buy_and_hold_cash, buy_and_hold_shares, final_price)
+    action_counts = {
+        'BUY': 0,
+        'SELL': 0,
+        'HOLD': 0,
+    }
+    for transaction in state.get('history', []):
+        action_counts[transaction['action']] = action_counts.get(transaction['action'], 0) + 1
+
+    final_value = _to_money(final_snapshot['portfolio_value'])
+    return {
+        'final_date': final_snapshot['date'],
+        'final_portfolio_value': final_snapshot['portfolio_value'],
+        'total_profit_loss': final_snapshot['profit_loss'],
+        'transaction_count': len(state.get('history', [])),
+        'action_counts': action_counts,
+        'buy_and_hold_value': _money_to_string(buy_and_hold_value),
+        'buy_and_hold_profit_loss': _money_to_string(buy_and_hold_value - initial_cash),
+        'difference_vs_buy_and_hold': _money_to_string(final_value - buy_and_hold_value),
+    }
+
+
+def _parse_shares(value: str | int | None, action: str) -> int:
+    if action == 'HOLD':
+        return 0
+
+    try:
+        shares = int(value)
+    except (TypeError, ValueError) as exc:
+        raise SimulationError('Liczba akcji musi być liczbą całkowitą.') from exc
+
+    if shares <= 0:
+        raise SimulationError('Liczba akcji musi być większa od zera.')
+
+    return shares
+
+
+def _portfolio_value(cash: Decimal, shares: int, price: Decimal) -> Decimal:
+    return cash + Decimal(shares) * price
+
+
+def _to_money(value: str | int | float | Decimal) -> Decimal:
+    try:
+        return Decimal(str(value)).quantize(Decimal('0.01'))
+    except (InvalidOperation, ValueError) as exc:
+        raise SimulationError('Niepoprawna wartość pieniężna.') from exc
+
+
+def _money_to_string(value: Decimal) -> str:
+    return str(value.quantize(Decimal('0.01')))
