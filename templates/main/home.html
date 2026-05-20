@@ -195,6 +195,28 @@
         </div>
         <div class="metrics-grid model-metrics-grid">
             <article class="metric">
+                <span>Okno treningowe</span>
+                <strong id="model-training-window">-</strong>
+            </article>
+            <article class="metric">
+                <span>Lookback</span>
+                <strong id="model-lookback">-</strong>
+            </article>
+            <article class="metric">
+                <span>Dozwolone tickery</span>
+                <strong id="model-tickers">AAPL, TSLA, MSFT, NVDA</strong>
+            </article>
+            <article class="metric">
+                <span>Tryb uczenia</span>
+                <strong id="model-walk-forward">Walk-forward</strong>
+            </article>
+            <article class="metric">
+                <span>Przyszle dane</span>
+                <strong id="model-no-leakage">Ukryte</strong>
+            </article>
+        </div>
+        <div class="metrics-grid model-metrics-grid">
+            <article class="metric">
                 <span>MAE</span>
                 <strong id="metric-mae">-</strong>
             </article>
@@ -302,5 +324,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=prediction-vs-reality-1"></script>
+<script src="{% static 'js/simulator.js' %}?v=model-panel-1"></script>
 {% endblock %}

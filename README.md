@@ -138,6 +138,17 @@ Prezentowane metryki:
 
 Predykcje maja charakter orientacyjny. Dane gieldowe sa zaszumione i model nie gwarantuje zysku.
 
+## Zalozenia i ograniczenia
+
+- aplikacja obsluguje cztery tickery demo: `AAPL`, `TSLA`, `MSFT`, `NVDA`
+- symulacja nie uwzglednia kosztow transakcyjnych
+- symulacja nie uwzglednia poslizgu cenowego ani prowizji brokera
+- transakcje uzytkownika nie maja wplywu na rynek ani na dane historyczne
+- decyzje wykonywane sa po cenie zamkniecia aktualnie odslonietego dnia
+- przyszle dane pozostaja ukryte do momentu wykonania kolejnego kroku
+- metryki i predykcje modelu maja charakter pomocniczy, nie inwestycyjnej rekomendacji
+- jesli odsloniety fragment szeregu jest zbyt krotki do treningu Random Forest, aplikacja pokazuje predykcje bazowa
+
 ## Zakres funkcjonalny
 
 Aplikacja zapewnia:

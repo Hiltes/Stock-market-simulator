@@ -91,6 +91,7 @@ function renderState(state) {
     setText('#day-volume', Number(day.volume).toLocaleString('pl-PL'));
     renderPrediction(prediction);
     renderModelMetrics(state.model_metrics);
+    renderModelParams(state.model_params);
     renderDataStats(state.data_stats);
 
     const profitLoss = document.querySelector('#profit-loss');
@@ -173,6 +174,15 @@ function renderModelMetrics(modelMetrics) {
     setText('#metric-r2', formatMetric(metrics.regression.r2));
     setText('#metric-accuracy', formatMetric(metrics.classification.accuracy));
     setText('#metric-f1', formatMetric(metrics.classification.f1));
+}
+
+function renderModelParams(modelParams) {
+    if (!modelParams) {
+        return;
+    }
+
+    setText('#model-training-window', `${modelParams.training_window_days} dni`);
+    setText('#model-lookback', `${modelParams.lookback_days} dni`);
 }
 
 function renderDataStats(stats) {
