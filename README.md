@@ -118,6 +118,11 @@ POST /api/decision
 
 Odpowiedz API zawiera tylko aktualnie odsloniety dzien (`current_day` i `ohlcv`), stan portfela (`cash`, `shares`, `portfolio_value`, `profit_loss`) oraz historie wykonanych transakcji. Backend nie zwraca przyszlych dni przed wykonaniem kolejnego kroku. Predykcja modelu jest liczona w trybie walk-forward, czyli tylko na podstawie danych odslonietych do biezacego dnia. Dla zgodnosci zostawiony jest tez alias `POST /api/action`.
 
+Frontend pokazuje dodatkowo:
+
+- podstawowe statystyki odslonietych danych, bez podgladu przyszlosci
+- sekcje `predykcja vs rzeczywistosc`, uzupelniana po kazdym kroku, gdy znany jest juz faktyczny wynik kolejnego dnia
+
 ## Model ML
 
 Projekt wykorzystuje:
@@ -146,6 +151,8 @@ Aplikacja zapewnia:
 - operacje kupna, sprzedazy i czekania
 - endpointy JSON do startu i wykonywania akcji
 - panel tradingowy z historia transakcji
+- panel `predykcja vs rzeczywistosc`
+- podstawowe statystyki odslonietej czesci szeregu
 - wykres otwarcia, maksimum, minimum, zamkniecia i wolumenu
 - metryki jakosci modelu
 - podsumowanie koncowe symulacji

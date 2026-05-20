@@ -25,7 +25,7 @@ async function postJson(url, payload) {
     });
     const data = await response.json();
     if (!response.ok) {
-        throw new Error(data.error || 'Wystąpił błąd.');
+        throw new Error(data.error || 'Wystapil blad.');
     }
     return data;
 }
@@ -91,18 +91,20 @@ function renderState(state) {
     setText('#day-volume', Number(day.volume).toLocaleString('pl-PL'));
     renderPrediction(prediction);
     renderModelMetrics(state.model_metrics);
+    renderDataStats(state.data_stats);
 
     const profitLoss = document.querySelector('#profit-loss');
     profitLoss.classList.toggle('is-positive', Number(portfolio.profit_loss) > 0);
     profitLoss.classList.toggle('is-negative', Number(portfolio.profit_loss) < 0);
 
     renderHistory(state.history);
+    renderPredictionEvaluations(state.prediction_evaluation_history || []);
     renderChart(state.portfolio_history);
     renderSummary(state.summary);
     setActionsDisabled(state.finished);
 
     if (state.finished) {
-        actionMessage.textContent = 'Symulacja zakończona. Możesz uruchomić nową.';
+        actionMessage.textContent = 'Symulacja zakonczona. Mozesz uruchomic nowa.';
     }
 }
 
@@ -122,7 +124,7 @@ function renderSummary(summary) {
     setText('#summary-difference', money(summary.difference_vs_buy_and_hold));
     setText(
         '#summary-actions',
-        `Kupno: ${summary.action_counts.BUY}, sprzedaż: ${summary.action_counts.SELL}, czekanie: ${summary.action_counts.HOLD}`,
+        `Kupno: ${summary.action_counts.BUY}, sprzedaz: ${summary.action_counts.SELL}, czekanie: ${summary.action_counts.HOLD}`,
     );
 }
 
@@ -130,18 +132,24 @@ function renderPrediction(prediction) {
     const predictionBox = document.querySelector('#prediction-box');
     const direction = prediction.direction || 'FLAT';
     const change = Number(prediction.change || 0);
-    const arrow = direction === 'UP' ? '▲' : direction === 'DOWN' ? '▼' : '■';
+    const arrow = direction === 'UP' ? '^' : direction === 'DOWN' ? 'v' : '=';
     const label = direction === 'UP' ? 'wzrost' : direction === 'DOWN' ? 'spadek' : 'bez zmian';
     const signedChange = `${change >= 0 ? '+' : ''}${money(change)}`;
     const signedPercent = `${Number(prediction.change_percent || 0) >= 0 ? '+' : ''}${percent(prediction.change_percent || 0)}`;
+    const targetDate = prediction.target_date ? ` dla dnia ${prediction.target_date}` : '';
+    const probabilityUp = percent(Number(prediction.probability_up || 0) * 100);
+    const probabilityDown = percent(Number(prediction.probability_down || (1 - Number(prediction.probability_up || 0))) * 100);
 
     predictionBox.classList.toggle('prediction-up', direction === 'UP');
     predictionBox.classList.toggle('prediction-down', direction === 'DOWN');
     predictionBox.classList.toggle('prediction-flat', direction === 'FLAT');
 
     setText('#prediction', `${arrow} ${label}: ${money(prediction.predicted_close)}`);
-    setText('#prediction-change', `${signedChange} (${signedPercent}) względem dzisiejszego zamknięcia`);
-    setText('#prediction-details', `${prediction.model}, pewność ${percent(Number(prediction.confidence || 0) * 100)}`);
+    setText('#prediction-change', `${signedChange} (${signedPercent}) wzgledem dzisiejszego zamkniecia${targetDate}`);
+    setText(
+        '#prediction-details',
+        `${prediction.model}, pewnosc ${percent(Number(prediction.confidence || 0) * 100)}, P(up) ${probabilityUp}, P(down) ${probabilityDown}`,
+    );
 }
 
 function renderModelMetrics(modelMetrics) {
@@ -167,6 +175,20 @@ function renderModelMetrics(modelMetrics) {
     setText('#metric-f1', formatMetric(metrics.classification.f1));
 }
 
+function renderDataStats(stats) {
+    if (!stats) {
+        return;
+    }
+
+    setText('#stats-visible-days', stats.visible_days);
+    setText('#stats-min-close', money(stats.min_close));
+    setText('#stats-max-close', money(stats.max_close));
+    setText('#stats-avg-close', money(stats.avg_close));
+    setText('#stats-avg-volume', Number(stats.avg_volume).toLocaleString('pl-PL'));
+    setText('#stats-return', percent(stats.period_return_percent));
+    setText('#stats-range', `Zakres widocznych danych: ${stats.first_date} - ${stats.last_date}`);
+}
+
 function formatMetric(value) {
     return value === null || value === undefined ? '-' : Number(value).toFixed(3);
 }
@@ -190,13 +212,43 @@ function renderHistory(history) {
     `).join('');
 }
 
+function renderPredictionEvaluations(evaluations) {
+    const body = document.querySelector('#prediction-evaluation-body');
+    if (!evaluations.length) {
+        body.innerHTML = '<tr><td colspan="8">Brak porownan.</td></tr>';
+        return;
+    }
+
+    body.innerHTML = evaluations.map((item) => `
+        <tr>
+            <td>${item.based_on_date}</td>
+            <td>${item.target_date}</td>
+            <td>${money(item.predicted_close)}</td>
+            <td>${money(item.actual_close)}</td>
+            <td>${money(item.error)}</td>
+            <td>${directionLabel(item.predicted_direction)}</td>
+            <td>${directionLabel(item.actual_direction)}</td>
+            <td>${item.direction_match ? 'Tak' : 'Nie'}</td>
+        </tr>
+    `).join('');
+}
+
 function actionLabel(action) {
     const labels = {
         BUY: 'Kupno',
-        SELL: 'Sprzedaż',
+        SELL: 'Sprzedaz',
         HOLD: 'Czekanie',
     };
     return labels[action] || action;
+}
+
+function directionLabel(direction) {
+    const labels = {
+        UP: 'Wzrost',
+        DOWN: 'Spadek',
+        FLAT: 'Bez zmian',
+    };
+    return labels[direction] || direction;
 }
 
 function renderChart(portfolioHistory) {
@@ -209,7 +261,7 @@ function renderChart(portfolioHistory) {
     const ctx = document.querySelector('#price-chart');
     const datasets = [
         {
-            label: 'Zamknięcie',
+            label: 'Zamkniecie',
             data: closePrices,
             borderColor: '#126c59',
             backgroundColor: 'rgba(18, 108, 89, 0.12)',
@@ -298,7 +350,7 @@ function setActionsDisabled(disabled) {
 startForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     syncDateRange();
-    startMessage.textContent = 'Pobieram dane i uruchamiam symulację...';
+    startMessage.textContent = 'Pobieram dane i uruchamiam symulacje...';
 
     try {
         const state = await postJson(startForm.action, formPayload(startForm));
@@ -313,7 +365,7 @@ startForm.addEventListener('submit', async (event) => {
 
 actionButtons.forEach((button) => {
     button.addEventListener('click', async () => {
-        actionMessage.textContent = 'Aktualizuję portfel...';
+        actionMessage.textContent = 'Aktualizuje portfel...';
         const action = button.dataset.action;
         const shares = action === 'HOLD' ? 0 : tradeSharesInput.value;
 
@@ -330,7 +382,7 @@ actionButtons.forEach((button) => {
 newSimulationButton.addEventListener('click', () => {
     tradingPanel.classList.add('is-hidden');
     startSection.classList.remove('is-hidden');
-    startMessage.textContent = 'Pobieranie danych może potrwać kilka sekund.';
+    startMessage.textContent = 'Pobieranie danych moze potrwac kilka sekund.';
     actionMessage.textContent = '';
     setActionsDisabled(false);
 });
@@ -339,4 +391,5 @@ newSimulationButton.addEventListener('click', () => {
     startDateInput.addEventListener(eventName, scheduleDateRangeSync);
     endDateInput.addEventListener(eventName, scheduleDateRangeSync);
 });
+
 syncDateRange();

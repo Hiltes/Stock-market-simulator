@@ -155,6 +155,39 @@
         </div>
     </section>
 
+    <section class="stats-section">
+        <div class="section-heading">
+            <h3>Podstawowe statystyki danych</h3>
+        </div>
+        <div class="metrics-grid summary-grid">
+            <article class="metric">
+                <span>Widoczne dni</span>
+                <strong id="stats-visible-days">-</strong>
+            </article>
+            <article class="metric">
+                <span>Min close</span>
+                <strong id="stats-min-close">-</strong>
+            </article>
+            <article class="metric">
+                <span>Max close</span>
+                <strong id="stats-max-close">-</strong>
+            </article>
+            <article class="metric">
+                <span>Sredni close</span>
+                <strong id="stats-avg-close">-</strong>
+            </article>
+            <article class="metric">
+                <span>Sredni wolumen</span>
+                <strong id="stats-avg-volume">-</strong>
+            </article>
+            <article class="metric">
+                <span>Stopa zwrotu</span>
+                <strong id="stats-return">-</strong>
+            </article>
+        </div>
+        <p class="form-note" id="stats-range">-</p>
+    </section>
+
     <section class="model-section">
         <div class="section-heading">
             <h3>Jakosc modelu</h3>
@@ -208,6 +241,31 @@
         </div>
     </section>
 
+    <section class="history-section">
+        <div class="section-heading">
+            <h3>Predykcja vs rzeczywistosc</h3>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Na podstawie dnia</th>
+                        <th>Dzien rzeczywisty</th>
+                        <th>Pred close</th>
+                        <th>Actual close</th>
+                        <th>Blad</th>
+                        <th>Pred dir</th>
+                        <th>Actual dir</th>
+                        <th>Zgodnosc</th>
+                    </tr>
+                </thead>
+                <tbody id="prediction-evaluation-body">
+                    <tr><td colspan="8">Brak porownan.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section class="summary-section is-hidden" id="summary-section">
         <div class="section-heading">
             <h3>Podsumowanie symulacji</h3>
@@ -244,5 +302,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=ml-walk-forward-1"></script>
+<script src="{% static 'js/simulator.js' %}?v=prediction-vs-reality-1"></script>
 {% endblock %}

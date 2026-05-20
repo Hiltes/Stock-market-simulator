@@ -43,6 +43,7 @@ def create_simulation_state(
         'status': 'running',
         'history': [],
         'portfolio_history': [],
+        'prediction_evaluation_history': [],
     }
     state['portfolio_history'].append(portfolio_snapshot(state))
     return state
@@ -156,6 +157,7 @@ def serialize_state(state: dict[str, Any]) -> dict[str, Any]:
         'history': state['history'],
         'transaction_history': state['history'],
         'portfolio_history': state['portfolio_history'],
+        'prediction_evaluation_history': state.get('prediction_evaluation_history', []),
         'finished': state['status'] == 'finished',
     }
     if serialized['finished']:

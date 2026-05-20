@@ -72,6 +72,7 @@ def api_history(request):
             'history': state.get('history', []),
             'transaction_history': state.get('history', []),
             'portfolio_history': state.get('portfolio_history', []),
+            'prediction_evaluation_history': state.get('prediction_evaluation_history', []),
         }
     )
 
@@ -83,7 +84,9 @@ def _handle_decision(request):
 
     try:
         payload = _json_payload(request)
+        prediction_before_action = _prediction_for_state(state, _build_ml_artifacts(state))
         perform_action(state, payload.get('action'), payload.get('shares'))
+        _append_prediction_evaluation(state, prediction_before_action)
         _save_simulation_state(request, state)
 
         response = _state_response(state)
@@ -106,6 +109,7 @@ def _state_response(state):
     response['prediction'] = _prediction_for_state(state, artifacts)
     response['model_metrics'] = _model_metrics(artifacts)
     response['model_params'] = state.get('model_params', {})
+    response['data_stats'] = _data_stats(state)
     return response
 
 
@@ -142,6 +146,70 @@ def _model_metrics(artifacts):
         'metrics': artifacts.get('metrics'),
         'warning': artifacts.get('warning'),
     }
+
+
+def _data_stats(state):
+    visible_prices = state['prices'][: int(state['current_step']) + 1]
+    closes = [float(item['close']) for item in visible_prices]
+    volumes = [int(item['volume']) for item in visible_prices]
+    first_close = closes[0]
+    last_close = closes[-1]
+    period_return_percent = ((last_close - first_close) / first_close) * 100 if first_close else 0
+
+    return {
+        'visible_days': len(visible_prices),
+        'first_date': visible_prices[0]['date'],
+        'last_date': visible_prices[-1]['date'],
+        'min_close': f'{min(closes):.2f}',
+        'max_close': f'{max(closes):.2f}',
+        'avg_close': f'{(sum(closes) / len(closes)):.2f}',
+        'avg_volume': int(sum(volumes) / len(volumes)),
+        'period_return_percent': round(period_return_percent, 4),
+    }
+
+
+def _append_prediction_evaluation(state, prediction):
+    history = state.setdefault('prediction_evaluation_history', [])
+    target_date = prediction.get('target_date')
+    current_day = state['prices'][int(state['current_step'])]
+    if not target_date or target_date != current_day['date']:
+        return
+
+    actual_close = float(current_day['close'])
+    predicted_close = float(prediction['predicted_close'])
+    error = actual_close - predicted_close
+    actual_direction = _actual_direction(state)
+    predicted_direction = prediction.get('direction', 'FLAT')
+
+    history.append(
+        {
+            'based_on_date': prediction.get('based_on_date'),
+            'target_date': target_date,
+            'predicted_close': f'{predicted_close:.2f}',
+            'actual_close': f'{actual_close:.2f}',
+            'error': f'{error:.2f}',
+            'absolute_error': f'{abs(error):.2f}',
+            'predicted_direction': predicted_direction,
+            'actual_direction': actual_direction,
+            'direction_match': predicted_direction == actual_direction,
+            'probability_up': prediction.get('probability_up'),
+            'probability_down': prediction.get('probability_down'),
+        }
+    )
+
+
+def _actual_direction(state):
+    current_step = int(state['current_step'])
+    if current_step == 0:
+        return 'FLAT'
+
+    previous_close = float(state['prices'][current_step - 1]['close'])
+    current_close = float(state['prices'][current_step]['close'])
+    if current_close > previous_close:
+        return 'UP'
+    if current_close < previous_close:
+        return 'DOWN'
+    return 'FLAT'
 
 
 def _baseline_prediction(state):
