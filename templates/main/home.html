@@ -148,7 +148,11 @@
 
     <section class="chart-section">
         <div class="section-heading">
-            <h3>Odkryte dane gieldowe</h3>
+            <div>
+                <h3>Odkryte dane gieldowe</h3>
+                <p class="form-note">Przewijaj kolkiem, zeby przyblizac i oddalac. Przeciagnij wykres, zeby przesuwac zakres.</p>
+            </div>
+            <button type="button" class="secondary-button compact-button" id="reset-zoom-button">Reset zoom</button>
         </div>
         <div class="chart-frame">
             <canvas id="price-chart"></canvas>
@@ -326,5 +330,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=ml-hinty-1"></script>
+<script src="{% static 'js/simulator.js' %}?v=ml-hinty-zoom-1"></script>
 {% endblock %}

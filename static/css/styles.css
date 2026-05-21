@@ -421,6 +421,13 @@ button:hover {
     min-height: 300px;
 }
 
+.compact-button {
+    width: auto;
+    min-height: 36px;
+    padding: 0 14px;
+    white-space: nowrap;
+}
+
 .model-metrics-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
     margin-top: 14px;

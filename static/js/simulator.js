@@ -8,6 +8,7 @@ const actionButtons = document.querySelectorAll('[data-action]');
 const tradeSharesInput = document.querySelector('#trade-shares');
 const startDateInput = startForm.querySelector('[name="start_date"]');
 const endDateInput = startForm.querySelector('[name="end_date"]');
+const resetZoomButton = document.querySelector('#reset-zoom-button');
 let priceChart = null;
 
 function csrfToken() {
@@ -352,6 +353,27 @@ function renderChart(portfolioHistory) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true,
+                            },
+                            mode: 'x',
+                        },
+                    },
+                },
                 scales: {
                     price: {
                         type: 'linear',
@@ -421,6 +443,12 @@ newSimulationButton.addEventListener('click', () => {
     startMessage.textContent = 'Pobieranie danych moze potrwac kilka sekund.';
     actionMessage.textContent = '';
     setActionsDisabled(false);
+});
+
+resetZoomButton.addEventListener('click', () => {
+    if (priceChart && typeof priceChart.resetZoom === 'function') {
+        priceChart.resetZoom();
+    }
 });
 
 ['change', 'input', 'blur', 'keyup'].forEach((eventName) => {
