@@ -161,6 +161,16 @@ class SimulatorEngineTests(SimpleTestCase):
         self.assertEqual(state['current_step'], 1)
         self.assertEqual(state['history'][0]['action'], 'HOLD')
 
+    def test_transaction_stores_daily_price_change(self):
+        state = create_simulation_state('AAPL', SAMPLE_PRICES, '1000.00')
+
+        perform_action(state, 'HOLD')
+        perform_action(state, 'HOLD')
+
+        self.assertEqual(state['history'][1]['price_change'], '10.00')
+        self.assertEqual(state['history'][1]['price_change_percent'], '10.00')
+        self.assertEqual(state['history'][1]['price_direction'], 'UP')
+
     def test_finished_state_blocks_additional_actions(self):
         state = create_simulation_state('AAPL', SAMPLE_PRICES, '1000.00')
 

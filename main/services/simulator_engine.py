@@ -97,6 +97,7 @@ def perform_action(
         'action': normalized_action,
         'shares': int(share_count),
         'price': _money_to_string(price),
+        **_price_change_for_step(state, price),
         'cash_after': state['cash'],
         'portfolio_value_after': _money_to_string(_portfolio_value(cash, owned_shares, price)),
     }
@@ -217,6 +218,26 @@ def _parse_shares(value: str | int | None, action: str) -> int:
 
 def _portfolio_value(cash: Decimal, shares: int, price: Decimal) -> Decimal:
     return cash + Decimal(shares) * price
+
+
+def _price_change_for_step(state: dict[str, Any], current_price: Decimal) -> dict[str, str]:
+    current_step = int(state['current_step'])
+    if current_step == 0:
+        return {
+            'price_change': '0.00',
+            'price_change_percent': '0.00',
+            'price_direction': 'FLAT',
+        }
+
+    previous_price = _to_money(state['prices'][current_step - 1]['close'])
+    change = current_price - previous_price
+    change_percent = (change / previous_price) * Decimal('100') if previous_price else Decimal('0')
+    direction = 'UP' if change > 0 else 'DOWN' if change < 0 else 'FLAT'
+    return {
+        'price_change': _money_to_string(change),
+        'price_change_percent': str(change_percent.quantize(Decimal('0.01'))),
+        'price_direction': direction,
+    }
 
 
 def _to_money(value: str | int | float | Decimal) -> Decimal:
