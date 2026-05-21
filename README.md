@@ -1,14 +1,14 @@
-# Symulator giełdowy
+# Symulator gieldowy
 
-Webowy symulator inwestowania w akcje z predykcją kursów. Projekt jest budowany w Django, z PostgreSQL jako bazą danych oraz Docker Compose do uruchamiania lokalnego środowiska.
+Webowy symulator inwestowania w akcje z predykcja kursow. Projekt jest budowany w Django, z PostgreSQL jako baza danych oraz Docker Compose do uruchamiania lokalnego srodowiska.
 
 ## Wymagania
 
 - Docker i Docker Compose
-- Python 3.12, jeśli uruchamiasz projekt bez Dockera
-- dostęp do internetu do pobierania danych z Yahoo Finance
+- Python 3.12, jesli uruchamiasz projekt bez Dockera
+- dostep do internetu do pobierania danych z Yahoo Finance
 
-Nie jest wymagane konto ani klucz API. Dane są pobierane przez bibliotekę `yfinance`, a wykresy korzystają z Chart.js ładowanego z CDN.
+Nie jest wymagane konto ani klucz API. Dane sa pobierane przez biblioteke `yfinance`, a wykresy korzystaja z Chart.js ladowanego z CDN.
 
 ## Uruchamianie w Dockerze
 
@@ -16,13 +16,13 @@ Nie jest wymagane konto ani klucz API. Dane są pobierane przez bibliotekę `yfi
 docker compose up --build
 ```
 
-Kontener `web` automatycznie wykona migracje bazy, a aplikacja będzie dostępna pod adresem:
+Kontener `web` automatycznie wykona migracje bazy, a aplikacja bedzie dostepna pod adresem:
 
 ```text
 http://localhost:8000/
 ```
 
-Migracje można też wykonać ręcznie:
+Migracje mozna tez wykonac recznie:
 
 ```powershell
 docker compose exec web python manage.py migrate
@@ -38,23 +38,23 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Domyślna konfiguracja lokalna oczekuje PostgreSQL dostępnego pod `localhost:5432` z danymi:
+Domyslna konfiguracja lokalna oczekuje PostgreSQL dostepnego pod `localhost:5432` z danymi:
 
 - baza: `stock_db`
-- użytkownik: `stock_user`
-- hasło: `stock_password`
+- uzytkownik: `stock_user`
+- haslo: `stock_password`
 
-W Dockerze te wartości są ustawiane automatycznie w `docker-compose.yml`.
+W Dockerze te wartosci sa ustawiane automatycznie w `docker-compose.yml`.
 
-## Gdy widzisz domyślną stronę Django
+## Gdy widzisz domyslna strone Django
 
-Jeśli po zmianie brancha na `http://localhost:8000/` nadal pojawia się ekran "The install worked successfully", działa stary proces serwera. Zrestartuj usługę:
+Jesli po zmianie brancha na `http://localhost:8000/` nadal pojawia sie ekran "The install worked successfully", dziala stary proces serwera. Zrestartuj usluge:
 
 ```powershell
 docker compose restart web
 ```
 
-Jeśli to nie pomoże, przebuduj kontenery:
+Jesli to nie pomoze, przebuduj kontenery:
 
 ```powershell
 docker compose down
@@ -73,51 +73,97 @@ W Dockerze:
 docker compose exec web python manage.py test
 ```
 
-## Jak działa aplikacja
+## Jak dziala aplikacja
 
-1. Użytkownik wybiera ticker, zakres dat i gotówkę początkową.
-2. Backend pobiera historyczne dane giełdowe z Yahoo Finance.
-3. Dane są przetwarzane na cechy ML: opóźnione ceny, zmiany procentowe, średnie kroczące, zmienność i zmiany wolumenu.
-4. System trenuje modele Random Forest na początkowej części szeregu czasowego.
-5. Frontend pokazuje kolejne dni notowań, predykcję, dane OHLC, wolumen, portfel i historię decyzji.
-6. Użytkownik wykonuje decyzje: kupno, sprzedaż albo czekanie.
-7. Po zakończeniu symulacji aplikacja pokazuje podsumowanie i porównanie ze strategią "kup i trzymaj".
+1. Uzytkownik wybiera ticker, zakres dat i gotowke poczatkowa.
+2. Backend pobiera historyczne dane gieldowe z Yahoo Finance.
+3. Dane sa przetwarzane na cechy ML: opoznione ceny, zmiany procentowe, srednie kroczace, zmiennosc i zmiany wolumenu.
+4. System trenuje modele Random Forest na poczatkowej czesci szeregu czasowego.
+5. Frontend pokazuje kolejne dni notowan, predykcje, dane OHLC, wolumen, portfel i historie decyzji.
+6. Uzytkownik wykonuje decyzje: kupno, sprzedaz albo czekanie.
+7. Po zakonczeniu symulacji aplikacja pokazuje podsumowanie i porownanie ze strategia "kup i trzymaj".
 
 ## API
 
-Frontend komunikuje się z backendem przez lokalne endpointy Django:
+Frontend komunikuje sie z backendem przez lokalne endpointy Django:
 
-- `POST /api/start/` - start symulacji i przygotowanie danych oraz modelu,
-- `POST /api/action/` - wykonanie decyzji użytkownika i przejście do kolejnego dnia,
-- `GET /api/history/` - pobranie historii decyzji i wartości portfela.
+- `POST /api/start` - uruchamia symulacje na podstawie `ticker`, `start_date`, `end_date`, `initial_cash`
+- `POST /api/start` przyjmuje tez parametry modelu `training_window_days` i `lookback_days`
+- `POST /api/decision` - wykonuje decyzje `BUY`, `SELL` albo `HOLD` z polem `shares` i odslania kolejny dzien
+- `GET /api/history` - pobiera historie decyzji i wartosci portfela
+
+Przykladowy start:
+
+```json
+POST /api/start
+{
+  "ticker": "AAPL",
+  "start_date": "2024-01-01",
+  "end_date": "2024-03-01",
+  "initial_cash": "10000",
+  "training_window_days": 60,
+  "lookback_days": 3
+}
+```
+
+Przykladowa decyzja:
+
+```json
+POST /api/decision
+{
+  "action": "BUY",
+  "shares": 5
+}
+```
+
+Odpowiedz API zawiera tylko aktualnie odsloniety dzien (`current_day` i `ohlcv`), stan portfela (`cash`, `shares`, `portfolio_value`, `profit_loss`) oraz historie wykonanych transakcji. Backend nie zwraca przyszlych dni przed wykonaniem kolejnego kroku. Predykcja modelu jest liczona w trybie walk-forward, czyli tylko na podstawie danych odslonietych do biezacego dnia. Dla zgodnosci zostawiony jest tez alias `POST /api/action`.
+
+Frontend pokazuje dodatkowo:
+
+- podstawowe statystyki odslonietych danych, bez podgladu przyszlosci
+- sekcje `predykcja vs rzeczywistosc`, uzupelniana po kazdym kroku, gdy znany jest juz faktyczny wynik kolejnego dnia
 
 ## Model ML
 
 Projekt wykorzystuje:
 
-- `RandomForestRegressor` do predykcji następnej ceny zamknięcia,
-- `RandomForestClassifier` do oceny kierunku zmiany ceny.
+- `RandomForestRegressor` do predykcji nastepnej ceny zamkniecia
+- `RandomForestClassifier` do oceny kierunku zmiany ceny
+- walk-forward training bez wykorzystywania przyszlych danych wzgledem aktualnego kroku symulacji
 
 Prezentowane metryki:
 
-- regresja: `MAE`, `RMSE`, `R2`,
-- klasyfikacja: `accuracy`, `precision`, `recall`, `F1`.
+- regresja: `MAE`, `RMSE`, `R2`
+- klasyfikacja: `accuracy`, `precision`, `recall`, `F1`
 
-Predykcje mają charakter orientacyjny. Dane giełdowe są zaszumione i model nie gwarantuje zysku.
+Predykcje maja charakter orientacyjny. Dane gieldowe sa zaszumione i model nie gwarantuje zysku.
+
+## Zalozenia i ograniczenia
+
+- aplikacja obsluguje cztery tickery demo: `AAPL`, `TSLA`, `MSFT`, `NVDA`
+- symulacja nie uwzglednia kosztow transakcyjnych
+- symulacja nie uwzglednia poslizgu cenowego ani prowizji brokera
+- transakcje uzytkownika nie maja wplywu na rynek ani na dane historyczne
+- decyzje wykonywane sa po cenie zamkniecia aktualnie odslonietego dnia
+- przyszle dane pozostaja ukryte do momentu wykonania kolejnego kroku
+- metryki i predykcje modelu maja charakter pomocniczy, nie inwestycyjnej rekomendacji
+- jesli odsloniety fragment szeregu jest zbyt krotki do treningu Random Forest, aplikacja pokazuje predykcje bazowa
 
 ## Zakres funkcjonalny
 
 Aplikacja zapewnia:
 
-- formularz startu symulacji z tickerem, datami i gotówką startową,
-- automatyczną walidację zakresu dat,
-- pobieranie historycznych danych z Yahoo Finance,
-- preprocessing danych pod model ML,
-- predykcję ceny i kierunku zmiany,
-- symulację portfela dzień po dniu,
-- operacje kupna, sprzedaży i czekania,
-- endpointy JSON do startu i wykonywania akcji,
-- panel tradingowy z historią transakcji,
-- wykres otwarcia, maksimum, minimum, zamknięcia i wolumenu,
-- metryki jakości modelu,
-- podsumowanie końcowe symulacji.
+- formularz startu symulacji z tickerem, datami i gotowka startowa
+- automatyczna walidacje zakresu dat
+- pobieranie historycznych danych z Yahoo Finance
+- preprocessing danych pod model ML
+- predykcje ceny i kierunku zmiany
+- symulacje portfela dzien po dniu
+- operacje kupna, sprzedazy i czekania
+- endpointy JSON do startu i wykonywania akcji
+- panel tradingowy z historia transakcji
+- panel `predykcja vs rzeczywistosc`
+- podstawowe statystyki odslonietej czesci szeregu
+- wykres otwarcia, maksimum, minimum, zamkniecia i wolumenu
+- metryki jakosci modelu
+- podsumowanie koncowe symulacji
