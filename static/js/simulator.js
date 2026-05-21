@@ -72,6 +72,16 @@ function percent(value) {
     return `${Number(value).toFixed(2)}%`;
 }
 
+function signedMoney(value) {
+    const numberValue = Number(value);
+    return `${numberValue >= 0 ? '+' : ''}${money(numberValue)}`;
+}
+
+function signedPercent(value) {
+    const numberValue = Number(value);
+    return `${numberValue >= 0 ? '+' : ''}${percent(numberValue)}`;
+}
+
 function renderState(state) {
     const day = state.current_day;
     const portfolio = state.portfolio;
@@ -206,7 +216,7 @@ function formatMetric(value) {
 function renderHistory(history) {
     const body = document.querySelector('#history-body');
     if (!history.length) {
-        body.innerHTML = '<tr><td colspan="6">Brak decyzji.</td></tr>';
+        body.innerHTML = '<tr><td colspan="8">Brak decyzji.</td></tr>';
         return;
     }
 
@@ -216,6 +226,8 @@ function renderHistory(history) {
             <td>${actionLabel(item.action)}</td>
             <td>${item.shares}</td>
             <td>${money(item.price)}</td>
+            <td class="${movementClass(item.price_direction)}">${movementLabel(item.price_direction)} ${signedMoney(item.price_change || 0)}</td>
+            <td class="${movementClass(item.price_direction)}">${signedPercent(item.price_change_percent || 0)}</td>
             <td>${money(item.cash_after)}</td>
             <td>${money(item.portfolio_value_after)}</td>
         </tr>
@@ -259,6 +271,20 @@ function directionLabel(direction) {
         FLAT: 'Bez zmian',
     };
     return labels[direction] || direction;
+}
+
+function movementLabel(direction) {
+    return directionLabel(direction) || 'Bez zmian';
+}
+
+function movementClass(direction) {
+    if (direction === 'UP') {
+        return 'is-positive';
+    }
+    if (direction === 'DOWN') {
+        return 'is-negative';
+    }
+    return 'is-neutral';
 }
 
 function renderChart(portfolioHistory) {

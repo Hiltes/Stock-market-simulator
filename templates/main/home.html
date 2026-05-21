@@ -83,27 +83,27 @@
 
     <div class="metrics-grid">
         <article class="metric">
-            <span>Data</span>
+            <span class="label-with-tip">Data <button type="button" class="info-tip" data-tooltip="Aktualny dzien symulacji." aria-label="Wyjasnienie pola Data">i</button></span>
             <strong id="current-date">-</strong>
         </article>
         <article class="metric">
-            <span>Cena zamkniecia</span>
+            <span class="label-with-tip">Cena zamkniecia <button type="button" class="info-tip" data-tooltip="Cena akcji na koniec dnia." aria-label="Wyjasnienie ceny zamkniecia">i</button></span>
             <strong id="current-close">-</strong>
         </article>
         <article class="metric">
-            <span>Gotowka</span>
+            <span class="label-with-tip">Gotowka <button type="button" class="info-tip" data-tooltip="Wolne srodki po transakcjach." aria-label="Wyjasnienie gotowki">i</button></span>
             <strong id="cash">-</strong>
         </article>
         <article class="metric">
-            <span>Akcje</span>
+            <span class="label-with-tip">Akcje <button type="button" class="info-tip" data-tooltip="Liczba posiadanych akcji." aria-label="Wyjasnienie liczby akcji">i</button></span>
             <strong id="shares">-</strong>
         </article>
         <article class="metric">
-            <span>Wartosc portfela</span>
+            <span class="label-with-tip">Wartosc portfela <button type="button" class="info-tip" data-tooltip="Gotowka + akcje * cena zamkniecia." aria-label="Wyjasnienie wartosci portfela">i</button></span>
             <strong id="portfolio-value">-</strong>
         </article>
         <article class="metric">
-            <span>Zysk / strata</span>
+            <span class="label-with-tip">Zysk / strata <button type="button" class="info-tip" data-tooltip="Wynik wzgledem kapitalu startowego." aria-label="Wyjasnienie zysku i straty">i</button></span>
             <strong id="profit-loss">-</strong>
         </article>
     </div>
@@ -114,15 +114,15 @@
                 <h3>Dane dnia</h3>
             </div>
             <dl class="ohlc-list">
-                <div><dt>Otwarcie</dt><dd id="day-open">-</dd></div>
-                <div><dt>Maksimum</dt><dd id="day-high">-</dd></div>
-                <div><dt>Minimum</dt><dd id="day-low">-</dd></div>
-                <div><dt>Zamkniecie</dt><dd id="day-close">-</dd></div>
-                <div><dt>Wolumen</dt><dd id="day-volume">-</dd></div>
+                <div><dt>Otwarcie <button type="button" class="info-tip" data-tooltip="Cena na poczatku dnia." aria-label="Wyjasnienie ceny otwarcia">i</button></dt><dd id="day-open">-</dd></div>
+                <div><dt>Maksimum <button type="button" class="info-tip" data-tooltip="Najwyzsza cena dnia." aria-label="Wyjasnienie ceny maksymalnej">i</button></dt><dd id="day-high">-</dd></div>
+                <div><dt>Minimum <button type="button" class="info-tip" data-tooltip="Najnizsza cena dnia." aria-label="Wyjasnienie ceny minimalnej">i</button></dt><dd id="day-low">-</dd></div>
+                <div><dt>Zamkniecie <button type="button" class="info-tip" data-tooltip="Cena na koniec dnia." aria-label="Wyjasnienie ceny zamkniecia dnia">i</button></dt><dd id="day-close">-</dd></div>
+                <div><dt>Wolumen <button type="button" class="info-tip" data-tooltip="Liczba sprzedanych i kupionych akcji." aria-label="Wyjasnienie wolumenu">i</button></dt><dd id="day-volume">-</dd></div>
             </dl>
 
             <div class="prediction-box" id="prediction-box">
-                <span>Predykcja modelu</span>
+                <span class="label-with-tip">Predykcja modelu <button type="button" class="info-tip" data-tooltip="Prognoza ceny i kierunku. Pewnosc wynika z prawdopodobienstwa modelu." aria-label="Wyjasnienie predykcji i pewnosci modelu">i</button></span>
                 <strong id="prediction">-</strong>
                 <em id="prediction-change">-</em>
                 <small id="prediction-details">-</small>
@@ -195,45 +195,45 @@
         </div>
         <div class="metrics-grid model-metrics-grid">
             <article class="metric">
-                <span>Okno treningowe</span>
+                <span class="label-with-tip">Okno treningowe <button type="button" class="info-tip" data-tooltip="Liczba dni danych uzytych do uczenia modelu." aria-label="Wyjasnienie okna treningowego">i</button></span>
                 <strong id="model-training-window">-</strong>
             </article>
             <article class="metric">
-                <span>Lookback</span>
+                <span class="label-with-tip">Lookback <button type="button" class="info-tip" data-tooltip="Ile poprzednich dni model bierze pod uwage." aria-label="Wyjasnienie lookback">i</button></span>
                 <strong id="model-lookback">-</strong>
             </article>
             <article class="metric">
-                <span>Dozwolone tickery</span>
+                <span class="label-with-tip">Dozwolone tickery <button type="button" class="info-tip" data-tooltip="Spolki dostepne w wersji demo." aria-label="Wyjasnienie tickerow">i</button></span>
                 <strong id="model-tickers">AAPL, TSLA, MSFT, NVDA</strong>
             </article>
             <article class="metric">
-                <span>Tryb uczenia</span>
+                <span class="label-with-tip">Tryb uczenia <button type="button" class="info-tip" data-tooltip="Model uczy sie tylko na danych juz odslonietych." aria-label="Wyjasnienie trybu uczenia">i</button></span>
                 <strong id="model-walk-forward">Walk-forward</strong>
             </article>
             <article class="metric">
-                <span>Przyszle dane</span>
+                <span class="label-with-tip">Przyszle dane <button type="button" class="info-tip" data-tooltip="Kolejne dni sa ukryte do nastepnego kroku." aria-label="Wyjasnienie przyszlych danych">i</button></span>
                 <strong id="model-no-leakage">Ukryte</strong>
             </article>
         </div>
         <div class="metrics-grid model-metrics-grid">
             <article class="metric">
-                <span>MAE</span>
+                <span class="label-with-tip">MAE <button type="button" class="info-tip" data-tooltip="Sredni blad ceny. Nizej lepiej." aria-label="Wyjasnienie MAE">i</button></span>
                 <strong id="metric-mae">-</strong>
             </article>
             <article class="metric">
-                <span>RMSE</span>
+                <span class="label-with-tip">RMSE <button type="button" class="info-tip" data-tooltip="Blad ceny karzacy duze pomylki. Nizej lepiej." aria-label="Wyjasnienie RMSE">i</button></span>
                 <strong id="metric-rmse">-</strong>
             </article>
             <article class="metric">
-                <span>R2</span>
+                <span class="label-with-tip">R2 <button type="button" class="info-tip" data-tooltip="Dopasowanie regresji. Blizej 1 lepiej." aria-label="Wyjasnienie R2">i</button></span>
                 <strong id="metric-r2">-</strong>
             </article>
             <article class="metric">
-                <span>Accuracy</span>
+                <span class="label-with-tip">Accuracy <button type="button" class="info-tip" data-tooltip="Odsetek trafionych kierunkow ceny." aria-label="Wyjasnienie Accuracy">i</button></span>
                 <strong id="metric-accuracy">-</strong>
             </article>
             <article class="metric">
-                <span>F1</span>
+                <span class="label-with-tip">F1 <button type="button" class="info-tip" data-tooltip="Jakosc klasyfikacji wzrost/spadek." aria-label="Wyjasnienie F1">i</button></span>
                 <strong id="metric-f1">-</strong>
             </article>
         </div>
@@ -252,12 +252,14 @@
                         <th>Akcja</th>
                         <th>Akcje</th>
                         <th>Cena</th>
+                        <th>Zmiana $</th>
+                        <th>Zmiana %</th>
                         <th>Gotowka po</th>
                         <th>Wartosc po</th>
                     </tr>
                 </thead>
                 <tbody id="history-body">
-                    <tr><td colspan="6">Brak decyzji.</td></tr>
+                    <tr><td colspan="8">Brak decyzji.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -324,5 +326,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=model-panel-1"></script>
+<script src="{% static 'js/simulator.js' %}?v=ml-hinty-1"></script>
 {% endblock %}
