@@ -14,6 +14,65 @@
             Aplikacja pobierze rzeczywiste dane historyczne, a potem pozwoli podejmowac
             decyzje kupna, sprzedazy albo czekania.
         </p>
+        <div class="intro-chart" aria-hidden="true">
+            <div class="intro-chart-header">
+                <span>Podglad rynku</span>
+                <strong>+2.84%</strong>
+            </div>
+            <svg class="intro-chart-plot" viewBox="0 0 560 230" role="img" aria-label="Wizualizacja wykresu gieldowego">
+                <defs>
+                    <linearGradient id="intro-chart-fill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#126c59" stop-opacity="0.24" />
+                        <stop offset="100%" stop-color="#126c59" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+                <g class="grid-lines">
+                    <path d="M44 34H532M44 76H532M44 118H532M44 160H532M44 202H532" />
+                    <path d="M96 24V204M158 24V204M220 24V204M282 24V204M344 24V204M406 24V204M468 24V204" />
+                </g>
+                <g class="volume-bars">
+                    <rect x="52" y="152" width="12" height="50" />
+                    <rect x="75" y="140" width="12" height="62" />
+                    <rect x="98" y="166" width="12" height="36" />
+                    <rect x="121" y="128" width="12" height="74" />
+                    <rect x="144" y="148" width="12" height="54" />
+                    <rect x="167" y="118" width="12" height="84" />
+                    <rect x="190" y="156" width="12" height="46" />
+                    <rect x="213" y="98" width="12" height="104" />
+                    <rect x="236" y="132" width="12" height="70" />
+                    <rect x="259" y="92" width="12" height="110" />
+                    <rect x="282" y="124" width="12" height="78" />
+                    <rect x="305" y="108" width="12" height="94" />
+                    <rect x="328" y="142" width="12" height="60" />
+                    <rect x="351" y="116" width="12" height="86" />
+                    <rect x="374" y="130" width="12" height="72" />
+                    <rect x="397" y="100" width="12" height="102" />
+                    <rect x="420" y="86" width="12" height="116" />
+                    <rect x="443" y="112" width="12" height="90" />
+                    <rect x="466" y="72" width="12" height="130" />
+                    <rect x="489" y="94" width="12" height="108" />
+                </g>
+                <path class="area-line" d="M48 144L72 132L96 150L120 128L144 137L168 104L192 114L216 88L240 96L264 72L288 82L312 68L336 91L360 86L384 101L408 76L432 64L456 72L480 48L512 58L512 204L48 204Z" />
+                <path class="price-line" d="M48 144L72 132L96 150L120 128L144 137L168 104L192 114L216 88L240 96L264 72L288 82L312 68L336 91L360 86L384 101L408 76L432 64L456 72L480 48L512 58" />
+                <path class="average-line" d="M48 154L72 146L96 142L120 136L144 130L168 122L192 116L216 108L240 102L264 94L288 88L312 84L336 83L360 82L384 80L408 76L432 70L456 66L480 62L512 58" />
+                <g class="candles">
+                    <path d="M74 126V146" /><rect x="69" y="130" width="10" height="10" />
+                    <path d="M121 118V142" /><rect x="116" y="124" width="10" height="14" />
+                    <path d="M169 94V116" /><rect x="164" y="102" width="10" height="10" />
+                    <path d="M216 80V102" /><rect x="211" y="88" width="10" height="8" />
+                    <path d="M264 62V86" /><rect x="259" y="70" width="10" height="10" />
+                    <path d="M313 58V78" /><rect x="308" y="66" width="10" height="8" />
+                    <path d="M361 76V98" /><rect x="356" y="84" width="10" height="8" />
+                    <path d="M409 66V88" /><rect x="404" y="74" width="10" height="8" />
+                    <path d="M456 58V82" /><rect x="451" y="66" width="10" height="10" />
+                    <path d="M481 38V62" /><rect x="476" y="46" width="10" height="10" />
+                </g>
+                <g class="chart-labels">
+                    <text x="46" y="24">150</text>
+                    <text x="46" y="220">120</text>
+                </g>
+            </svg>
+        </div>
     </div>
 
     <form class="start-form" id="simulation-start-form" action="{% url 'main:api_start_simulation' %}" method="post">
@@ -53,6 +112,7 @@
                 step="1"
                 required
             >
+            <small class="form-note">Ile ostatnich dni model wykorzystuje do nauki. Domyslnie 60, bo daje stabilna probe bez nadmiernego mieszania bardzo starego rynku.</small>
         </label>
 
         <label>
@@ -65,6 +125,7 @@
                 step="1"
                 required
             >
+            <small class="form-note">Ile poprzednich dni tworzy cechy predykcji. Domyslnie 3, bo szybko reaguje na lokalny trend; 5-10 daje spokojniejszy, ale wolniejszy sygnal.</small>
         </label>
 
         <button type="submit">Start symulacji</button>
@@ -122,10 +183,11 @@
             </dl>
 
             <div class="prediction-box" id="prediction-box">
-                <span class="label-with-tip">Predykcja modelu <button type="button" class="info-tip" data-tooltip="Prognoza ceny i kierunku. Pewnosc wynika z prawdopodobienstwa modelu." aria-label="Wyjasnienie predykcji i pewnosci modelu">i</button></span>
+                <span class="label-with-tip">Predykcja modelu <button type="button" class="info-tip" data-tooltip="Prognoza ceny i kierunku. Pewnosc wynika z prawdopodobienstwa modelu. Model bazowy momentum pojawia sie, gdy jest jeszcze za malo danych dla Random Forest." aria-label="Wyjasnienie predykcji i pewnosci modelu">i</button></span>
                 <strong id="prediction">-</strong>
                 <em id="prediction-change">-</em>
                 <small id="prediction-details">-</small>
+                <small id="prediction-result" class="prediction-result is-hidden">-</small>
             </div>
         </section>
 
@@ -136,6 +198,7 @@
             <label>
                 Liczba akcji
                 <input type="number" id="trade-shares" min="1" step="1" value="1">
+                <small class="form-note">Ta liczba dotyczy tylko kupna i sprzedazy. Przy decyzji Czekaj portfel przechodzi do kolejnego dnia bez transakcji.</small>
             </label>
             <div class="action-row">
                 <button type="button" data-action="BUY">Kup</button>
@@ -150,7 +213,7 @@
         <div class="section-heading">
             <div>
                 <h3>Odkryte dane gieldowe</h3>
-                <p class="form-note">Przewijaj kolkiem, zeby przyblizac i oddalac. Przeciagnij wykres, zeby przesuwac zakres.</p>
+                <p class="form-note">Przewijaj kolkiem, zeby przyblizac i oddalac. Przeciagnij wykres, zeby przesuwac zakres. Punkty predykcji pokazuja, co model sugerowal dla kolejnego dnia.</p>
             </div>
             <button type="button" class="secondary-button compact-button" id="reset-zoom-button">Reset zoom</button>
         </div>
@@ -165,27 +228,27 @@
         </div>
         <div class="metrics-grid summary-grid">
             <article class="metric">
-                <span>Widoczne dni</span>
+                <span class="label-with-tip">Widoczne dni <button type="button" class="info-tip" data-tooltip="Liczba dni gieldowych odslonietych w aktualnym kroku symulacji." aria-label="Wyjasnienie widocznych dni">i</button></span>
                 <strong id="stats-visible-days">-</strong>
             </article>
             <article class="metric">
-                <span>Min close</span>
+                <span class="label-with-tip">Min close <button type="button" class="info-tip" data-tooltip="Najmniejsza cena zamkniecia w aktualnie odslonietym zakresie danych." aria-label="Wyjasnienie minimalnej ceny zamkniecia">i</button></span>
                 <strong id="stats-min-close">-</strong>
             </article>
             <article class="metric">
-                <span>Max close</span>
+                <span class="label-with-tip">Max close <button type="button" class="info-tip" data-tooltip="Najwieksza cena zamkniecia w aktualnie odslonietym zakresie danych." aria-label="Wyjasnienie maksymalnej ceny zamkniecia">i</button></span>
                 <strong id="stats-max-close">-</strong>
             </article>
             <article class="metric">
-                <span>Sredni close</span>
+                <span class="label-with-tip">Sredni close <button type="button" class="info-tip" data-tooltip="Srednia cena zamkniecia policzona tylko z dni juz widocznych w symulacji." aria-label="Wyjasnienie sredniej ceny zamkniecia">i</button></span>
                 <strong id="stats-avg-close">-</strong>
             </article>
             <article class="metric">
-                <span>Sredni wolumen</span>
+                <span class="label-with-tip">Sredni wolumen <button type="button" class="info-tip" data-tooltip="Sredni wolumen obrotu policzony dla aktualnie odslonietych dni." aria-label="Wyjasnienie sredniego wolumenu">i</button></span>
                 <strong id="stats-avg-volume">-</strong>
             </article>
             <article class="metric">
-                <span>Stopa zwrotu</span>
+                <span class="label-with-tip">Stopa zwrotu <button type="button" class="info-tip" data-tooltip="Zmiana ceny zamkniecia od pierwszego widocznego dnia do aktualnego dnia." aria-label="Wyjasnienie stopy zwrotu">i</button></span>
                 <strong id="stats-return">-</strong>
             </article>
         </div>
@@ -199,11 +262,11 @@
         </div>
         <div class="metrics-grid model-metrics-grid">
             <article class="metric">
-                <span class="label-with-tip">Okno treningowe <button type="button" class="info-tip" data-tooltip="Liczba dni danych uzytych do uczenia modelu." aria-label="Wyjasnienie okna treningowego">i</button></span>
+                <span class="label-with-tip">Okno treningowe <button type="button" class="info-tip" data-tooltip="Ile ostatnich dni trafia do uczenia modelu. Wieksze okno stabilizuje wyniki, mniejsze szybciej reaguje na zmiany rynku. Domyslnie 60 dni." aria-label="Wyjasnienie okna treningowego">i</button></span>
                 <strong id="model-training-window">-</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">Lookback <button type="button" class="info-tip" data-tooltip="Ile poprzednich dni model bierze pod uwage." aria-label="Wyjasnienie lookback">i</button></span>
+                <span class="label-with-tip">Lookback <button type="button" class="info-tip" data-tooltip="Liczba poprzednich dni uzytych jako cechy predykcji. 3 dni to szybka reakcja, 5-10 to spokojniejszy sygnal." aria-label="Wyjasnienie lookback">i</button></span>
                 <strong id="model-lookback">-</strong>
             </article>
             <article class="metric">
@@ -211,7 +274,7 @@
                 <strong id="model-tickers">AAPL, TSLA, MSFT, NVDA</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">Tryb uczenia <button type="button" class="info-tip" data-tooltip="Model uczy sie tylko na danych juz odslonietych." aria-label="Wyjasnienie trybu uczenia">i</button></span>
+                <span class="label-with-tip">Tryb uczenia <button type="button" class="info-tip" data-tooltip="W tej wersji jest staly: model uczy sie tylko na danych juz odslonietych, bez podgladu przyszlosci." aria-label="Wyjasnienie trybu uczenia">i</button></span>
                 <strong id="model-walk-forward">Walk-forward</strong>
             </article>
             <article class="metric">
@@ -221,23 +284,23 @@
         </div>
         <div class="metrics-grid model-metrics-grid">
             <article class="metric">
-                <span class="label-with-tip">MAE <button type="button" class="info-tip" data-tooltip="Sredni blad ceny. Nizej lepiej." aria-label="Wyjasnienie MAE">i</button></span>
+                <span class="label-with-tip">MAE <button type="button" class="info-tip" data-tooltip="Sredni bezwzgledny blad ceny w USD. Zakres od 0 w gore; im blizej 0, tym lepiej." aria-label="Wyjasnienie MAE">i</button></span>
                 <strong id="metric-mae">-</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">RMSE <button type="button" class="info-tip" data-tooltip="Blad ceny karzacy duze pomylki. Nizej lepiej." aria-label="Wyjasnienie RMSE">i</button></span>
+                <span class="label-with-tip">RMSE <button type="button" class="info-tip" data-tooltip="Blad ceny w USD mocniej karzacy duze pomylki. Zakres od 0 w gore; im blizej 0, tym lepiej." aria-label="Wyjasnienie RMSE">i</button></span>
                 <strong id="metric-rmse">-</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">R2 <button type="button" class="info-tip" data-tooltip="Dopasowanie regresji. Blizej 1 lepiej." aria-label="Wyjasnienie R2">i</button></span>
+                <span class="label-with-tip">R2 <button type="button" class="info-tip" data-tooltip="Dopasowanie regresji. 1 oznacza bardzo dobre dopasowanie, 0 slabe, wartosci ujemne oznaczaja model gorszy od prostego punktu odniesienia." aria-label="Wyjasnienie R2">i</button></span>
                 <strong id="metric-r2">-</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">Accuracy <button type="button" class="info-tip" data-tooltip="Odsetek trafionych kierunkow ceny." aria-label="Wyjasnienie Accuracy">i</button></span>
+                <span class="label-with-tip">Accuracy <button type="button" class="info-tip" data-tooltip="Odsetek trafionych kierunkow ceny. Zakres 0-100%; im blizej 100%, tym lepiej." aria-label="Wyjasnienie Accuracy">i</button></span>
                 <strong id="metric-accuracy">-</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">F1 <button type="button" class="info-tip" data-tooltip="Jakosc klasyfikacji wzrost/spadek." aria-label="Wyjasnienie F1">i</button></span>
+                <span class="label-with-tip">F1 <button type="button" class="info-tip" data-tooltip="Jakosc klasyfikacji wzrost/spadek z uwzglednieniem pomylek. Zakres 0-1; im blizej 1, tym lepiej." aria-label="Wyjasnienie F1">i</button></span>
                 <strong id="metric-f1">-</strong>
             </article>
         </div>
@@ -279,16 +342,17 @@
                     <tr>
                         <th>Na podstawie dnia</th>
                         <th>Dzien rzeczywisty</th>
-                        <th>Pred close</th>
-                        <th>Actual close</th>
-                        <th>Blad</th>
-                        <th>Pred dir</th>
-                        <th>Actual dir</th>
-                        <th>Zgodnosc</th>
+                        <th><span class="label-with-tip">Pred close <button type="button" class="info-tip" data-tooltip="Cena zamkniecia przewidziana przez model dla kolejnego dnia." aria-label="Wyjasnienie Pred close">i</button></span></th>
+                        <th><span class="label-with-tip">Actual close <button type="button" class="info-tip" data-tooltip="Rzeczywista cena zamkniecia po odslonieciu kolejnego dnia." aria-label="Wyjasnienie Actual close">i</button></span></th>
+                        <th><span class="label-with-tip">Blad ceny <button type="button" class="info-tip" data-tooltip="Roznica miedzy cena rzeczywista i przewidziana. Pokazuje, o ile model zawyzyl albo zanizyl prognoze." aria-label="Wyjasnienie bledu ceny">i</button></span></th>
+                        <th><span class="label-with-tip">Pred dir <button type="button" class="info-tip" data-tooltip="Kierunek przewidziany przez model: wzrost, spadek albo bez zmian." aria-label="Wyjasnienie Pred dir">i</button></span></th>
+                        <th><span class="label-with-tip">Actual dir <button type="button" class="info-tip" data-tooltip="Rzeczywisty kierunek ceny po przejsciu do kolejnego dnia." aria-label="Wyjasnienie Actual dir">i</button></span></th>
+                        <th><span class="label-with-tip">P(up) / P(down) <button type="button" class="info-tip" data-tooltip="Prawdopodobienstwo wzrostu i spadku wedlug klasyfikatora. Im wyzsza wartosc, tym mocniej model wskazuje ten kierunek." aria-label="Wyjasnienie P up i P down">i</button></span></th>
+                        <th><span class="label-with-tip">Wynik <button type="button" class="info-tip" data-tooltip="Informacja, czy model trafil kierunek ruchu ceny." aria-label="Wyjasnienie wyniku predykcji">i</button></span></th>
                     </tr>
                 </thead>
                 <tbody id="prediction-evaluation-body">
-                    <tr><td colspan="8">Brak porownan.</td></tr>
+                    <tr><td colspan="9">Brak porownan.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -330,5 +394,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=ml-hinty-zoom-1"></script>
+<script src="{% static 'js/simulator.js' %}?v=ml-hinty-zoom-3"></script>
 {% endblock %}

@@ -10,6 +10,7 @@ const startDateInput = startForm.querySelector('[name="start_date"]');
 const endDateInput = startForm.querySelector('[name="end_date"]');
 const resetZoomButton = document.querySelector('#reset-zoom-button');
 let priceChart = null;
+let chartPointCount = 0;
 
 function csrfToken() {
     return document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -100,7 +101,7 @@ function renderState(state) {
     setText('#day-low', money(day.low));
     setText('#day-close', money(day.close));
     setText('#day-volume', Number(day.volume).toLocaleString('pl-PL'));
-    renderPrediction(prediction);
+    renderPrediction(prediction, state.prediction_evaluation_history || []);
     renderModelMetrics(state.model_metrics);
     renderModelParams(state.model_params);
     renderDataStats(state.data_stats);
@@ -111,7 +112,7 @@ function renderState(state) {
 
     renderHistory(state.history);
     renderPredictionEvaluations(state.prediction_evaluation_history || []);
-    renderChart(state.portfolio_history);
+    renderChart(state.portfolio_history, prediction, state.prediction_evaluation_history || []);
     renderSummary(state.summary);
     setActionsDisabled(state.finished);
 
@@ -140,11 +141,12 @@ function renderSummary(summary) {
     );
 }
 
-function renderPrediction(prediction) {
+function renderPrediction(prediction, evaluations = []) {
     const predictionBox = document.querySelector('#prediction-box');
+    const predictionResult = document.querySelector('#prediction-result');
     const direction = prediction.direction || 'FLAT';
     const change = Number(prediction.change || 0);
-    const arrow = direction === 'UP' ? '^' : direction === 'DOWN' ? 'v' : '=';
+    const arrow = direction === 'UP' ? '\u2191' : direction === 'DOWN' ? '\u2193' : '\u2192';
     const label = direction === 'UP' ? 'wzrost' : direction === 'DOWN' ? 'spadek' : 'bez zmian';
     const signedChange = `${change >= 0 ? '+' : ''}${money(change)}`;
     const signedPercent = `${Number(prediction.change_percent || 0) >= 0 ? '+' : ''}${percent(prediction.change_percent || 0)}`;
@@ -160,8 +162,21 @@ function renderPrediction(prediction) {
     setText('#prediction-change', `${signedChange} (${signedPercent}) wzgledem dzisiejszego zamkniecia${targetDate}`);
     setText(
         '#prediction-details',
-        `${prediction.model}, pewnosc ${percent(Number(prediction.confidence || 0) * 100)}, P(up) ${probabilityUp}, P(down) ${probabilityDown}`,
+        `${prediction.model}, pewnosc ${percent(Number(prediction.confidence || 0) * 100)}, P(up) = szansa wzrostu ${probabilityUp}, P(down) = szansa spadku ${probabilityDown}`,
     );
+
+    const latestEvaluation = evaluations[evaluations.length - 1];
+    if (!latestEvaluation) {
+        predictionResult.classList.add('is-hidden');
+        predictionResult.textContent = '';
+        predictionResult.classList.remove('is-positive', 'is-negative');
+        return;
+    }
+
+    predictionResult.classList.remove('is-hidden');
+    predictionResult.classList.toggle('is-positive', Boolean(latestEvaluation.direction_match));
+    predictionResult.classList.toggle('is-negative', !latestEvaluation.direction_match);
+    predictionResult.textContent = predictionEvaluationSummary(latestEvaluation);
 }
 
 function renderModelMetrics(modelMetrics) {
@@ -183,7 +198,7 @@ function renderModelMetrics(modelMetrics) {
     setText('#metric-mae', formatMetric(metrics.regression.mae));
     setText('#metric-rmse', formatMetric(metrics.regression.rmse));
     setText('#metric-r2', formatMetric(metrics.regression.r2));
-    setText('#metric-accuracy', formatMetric(metrics.classification.accuracy));
+    setText('#metric-accuracy', formatMetricPercent(metrics.classification.accuracy));
     setText('#metric-f1', formatMetric(metrics.classification.f1));
 }
 
@@ -214,6 +229,10 @@ function formatMetric(value) {
     return value === null || value === undefined ? '-' : Number(value).toFixed(3);
 }
 
+function formatMetricPercent(value) {
+    return value === null || value === undefined ? '-' : percent(Number(value) * 100);
+}
+
 function renderHistory(history) {
     const body = document.querySelector('#history-body');
     if (!history.length) {
@@ -238,7 +257,7 @@ function renderHistory(history) {
 function renderPredictionEvaluations(evaluations) {
     const body = document.querySelector('#prediction-evaluation-body');
     if (!evaluations.length) {
-        body.innerHTML = '<tr><td colspan="8">Brak porownan.</td></tr>';
+        body.innerHTML = '<tr><td colspan="9">Brak porownan.</td></tr>';
         return;
     }
 
@@ -248,10 +267,11 @@ function renderPredictionEvaluations(evaluations) {
             <td>${item.target_date}</td>
             <td>${money(item.predicted_close)}</td>
             <td>${money(item.actual_close)}</td>
-            <td>${money(item.error)}</td>
-            <td>${directionLabel(item.predicted_direction)}</td>
-            <td>${directionLabel(item.actual_direction)}</td>
-            <td>${item.direction_match ? 'Tak' : 'Nie'}</td>
+            <td class="${predictionErrorClass(item.error)}">${predictionErrorLabel(item.error)}</td>
+            <td>${directionArrowLabel(item.predicted_direction)}</td>
+            <td>${directionArrowLabel(item.actual_direction)}</td>
+            <td>${probabilityPair(item)}</td>
+            <td class="${item.direction_match ? 'evaluation-match' : 'evaluation-miss'}">${item.direction_match ? 'Trafiony kierunek' : 'Pomylka kierunku'}</td>
         </tr>
     `).join('');
 }
@@ -274,6 +294,41 @@ function directionLabel(direction) {
     return labels[direction] || direction;
 }
 
+function directionArrowLabel(direction) {
+    const arrows = {
+        UP: '\u2191',
+        DOWN: '\u2193',
+        FLAT: '\u2192',
+    };
+    return `${arrows[direction] || ''} ${directionLabel(direction)}`.trim();
+}
+
+function predictionErrorLabel(error) {
+    const value = Number(error || 0);
+    if (value > 0) {
+        return `Model zanizyl o ${money(Math.abs(value))}`;
+    }
+    if (value < 0) {
+        return `Model zawyzyl o ${money(Math.abs(value))}`;
+    }
+    return 'Trafiona cena';
+}
+
+function predictionErrorClass(error) {
+    return Number(error || 0) === 0 ? 'is-positive' : 'is-negative';
+}
+
+function probabilityPair(item) {
+    const probabilityUp = item.probability_up === null || item.probability_up === undefined ? '-' : percent(Number(item.probability_up) * 100);
+    const probabilityDown = item.probability_down === null || item.probability_down === undefined ? '-' : percent(Number(item.probability_down) * 100);
+    return `${probabilityUp} / ${probabilityDown}`;
+}
+
+function predictionEvaluationSummary(item) {
+    const result = item.direction_match ? 'model trafil kierunek' : 'model pomylil kierunek';
+    return `Ostatnia sprawdzona predykcja: ${result}, ${predictionErrorLabel(item.error).toLowerCase()}.`;
+}
+
 function movementLabel(direction) {
     return directionLabel(direction) || 'Bez zmian';
 }
@@ -288,13 +343,22 @@ function movementClass(direction) {
     return 'is-neutral';
 }
 
-function renderChart(portfolioHistory) {
-    const labels = portfolioHistory.map((item) => item.date);
-    const closePrices = portfolioHistory.map((item) => Number(item.stock_price));
-    const openPrices = portfolioHistory.map((item) => Number(item.open));
-    const highPrices = portfolioHistory.map((item) => Number(item.high));
-    const lowPrices = portfolioHistory.map((item) => Number(item.low));
-    const volumes = portfolioHistory.map((item) => Number(item.volume));
+function renderChart(portfolioHistory, prediction, evaluations = []) {
+    const observedLabels = portfolioHistory.map((item) => item.date);
+    const labels = [...observedLabels];
+    if (prediction && prediction.target_date && !labels.includes(prediction.target_date)) {
+        labels.push(prediction.target_date);
+    }
+
+    const historyByDate = new Map(portfolioHistory.map((item) => [item.date, item]));
+    const closePrices = labels.map((date) => historyByDate.has(date) ? Number(historyByDate.get(date).stock_price) : null);
+    const openPrices = labels.map((date) => historyByDate.has(date) ? Number(historyByDate.get(date).open) : null);
+    const highPrices = labels.map((date) => historyByDate.has(date) ? Number(historyByDate.get(date).high) : null);
+    const lowPrices = labels.map((date) => historyByDate.has(date) ? Number(historyByDate.get(date).low) : null);
+    const volumes = labels.map((date) => historyByDate.has(date) ? Number(historyByDate.get(date).volume) : null);
+    const evaluatedPredictionByDate = new Map(evaluations.map((item) => [item.target_date, Number(item.predicted_close)]));
+    const evaluatedPredictionPrices = labels.map((date) => evaluatedPredictionByDate.get(date) || null);
+    const currentPredictionPrices = labels.map((date) => prediction && date === prediction.target_date ? Number(prediction.predicted_close) : null);
     const ctx = document.querySelector('#price-chart');
     const datasets = [
         {
@@ -341,9 +405,36 @@ function renderChart(portfolioHistory) {
             backgroundColor: 'rgba(101, 115, 111, 0.18)',
             yAxisID: 'volume',
         },
+        {
+            type: 'line',
+            label: 'Predykcje sprawdzone',
+            data: evaluatedPredictionPrices,
+            borderColor: '#d18b00',
+            backgroundColor: '#d18b00',
+            pointBackgroundColor: '#d18b00',
+            pointBorderColor: '#ffffff',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            showLine: false,
+            yAxisID: 'price',
+        },
+        {
+            type: 'line',
+            label: 'Aktualna predykcja',
+            data: currentPredictionPrices,
+            borderColor: '#7c3aed',
+            backgroundColor: '#7c3aed',
+            pointBackgroundColor: '#7c3aed',
+            pointBorderColor: '#ffffff',
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            showLine: false,
+            yAxisID: 'price',
+        },
     ];
 
     if (!priceChart) {
+        chartPointCount = labels.length;
         priceChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -396,6 +487,12 @@ function renderChart(portfolioHistory) {
     priceChart.data.labels = labels;
     priceChart.data.datasets = datasets;
     priceChart.update();
+    if (labels.length !== chartPointCount) {
+        chartPointCount = labels.length;
+        if (typeof priceChart.resetZoom === 'function') {
+            priceChart.resetZoom('none');
+        }
+    }
 }
 
 function setActionsDisabled(disabled) {

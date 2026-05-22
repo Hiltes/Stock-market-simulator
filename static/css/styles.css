@@ -80,6 +80,88 @@ h1 {
     line-height: 1.6;
 }
 
+.intro-chart {
+    width: min(540px, 100%);
+    margin-top: 34px;
+    padding: 18px 18px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(237, 244, 240, 0.82));
+    box-shadow: 0 18px 36px rgba(28, 48, 43, 0.12);
+}
+
+.intro-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.intro-chart-header strong {
+    color: var(--accent);
+    font-size: 1rem;
+}
+
+.intro-chart-plot {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 16px;
+}
+
+.grid-lines path {
+    fill: none;
+    stroke: rgba(101, 115, 111, 0.2);
+    stroke-width: 1;
+}
+
+.volume-bars rect {
+    fill: rgba(101, 115, 111, 0.2);
+}
+
+.area-line {
+    fill: url("#intro-chart-fill");
+}
+
+.price-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 4;
+}
+
+.average-line {
+    fill: none;
+    stroke: #d18b00;
+    stroke-dasharray: 8 7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.5;
+}
+
+.candles path {
+    stroke: #0c4f41;
+    stroke-linecap: round;
+    stroke-width: 2;
+}
+
+.candles rect {
+    fill: #ffffff;
+    stroke: #0c4f41;
+    stroke-width: 2;
+}
+
+.chart-labels text {
+    fill: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
 .start-form {
     display: grid;
     gap: 18px;
@@ -408,6 +490,17 @@ button:hover {
     color: var(--muted);
 }
 
+.prediction-result {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 2px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: #eef6f3;
+    font-weight: 700;
+}
+
 .action-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -474,6 +567,16 @@ th {
     color: var(--muted);
 }
 
+.evaluation-match {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.evaluation-miss {
+    color: var(--danger);
+    font-weight: 700;
+}
+
 @media (max-width: 820px) {
     .app-header {
         padding: 0 16px;
@@ -498,6 +601,10 @@ th {
 
     .intro {
         padding-top: 0;
+    }
+
+    .intro-chart {
+        margin-top: 24px;
     }
 
     h1 {
