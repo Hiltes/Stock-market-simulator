@@ -180,6 +180,10 @@ label {
     font-weight: 700;
 }
 
+.start-form .label-with-tip {
+    width: 100%;
+}
+
 input,
 select,
 button {
