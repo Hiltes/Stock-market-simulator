@@ -78,7 +78,7 @@
     <form class="start-form" id="simulation-start-form" action="{% url 'main:api_start_simulation' %}" method="post">
         {% csrf_token %}
         <label>
-            Ticker
+            <span class="label-with-tip">Ticker <button type="button" class="info-tip" data-tooltip="Symbol spolki notowanej na gieldzie. Aplikacja pobiera dla niego historyczne dane z Yahoo Finance." aria-label="Wyjasnienie pola ticker">i</button></span>
             <select name="ticker" required>
                 <option value="AAPL">AAPL</option>
                 <option value="TSLA">TSLA</option>
@@ -88,22 +88,22 @@
         </label>
 
         <label>
-            Data poczatkowa
+            <span class="label-with-tip">Data poczatkowa <button type="button" class="info-tip" data-tooltip="Pierwszy dzien zakresu danych historycznych uzywanych w symulacji." aria-label="Wyjasnienie daty poczatkowej">i</button></span>
             <input type="date" name="start_date" value="2021-01-01" required>
         </label>
 
         <label>
-            Data koncowa
+            <span class="label-with-tip">Data koncowa <button type="button" class="info-tip" data-tooltip="Koniec zakresu danych. Musi byc pozniejszy niz data poczatkowa." aria-label="Wyjasnienie daty koncowej">i</button></span>
             <input type="date" name="end_date" value="2024-01-01" required>
         </label>
 
         <label>
-            Gotowka poczatkowa
+            <span class="label-with-tip">Gotowka poczatkowa <button type="button" class="info-tip" data-tooltip="Kwota startowa portfela, za ktora mozesz kupowac akcje w symulacji." aria-label="Wyjasnienie gotowki poczatkowej">i</button></span>
             <input type="number" name="initial_cash" value="10000" min="100" step="100" required>
         </label>
 
         <label>
-            Okno treningowe (dni)
+            <span class="label-with-tip">Okno treningowe (dni) <button type="button" class="info-tip" data-tooltip="Liczba ostatnich dni uzywana do uczenia modelu. Wieksza wartosc stabilizuje model, mniejsza szybciej reaguje na zmiany rynku." aria-label="Wyjasnienie okna treningowego">i</button></span>
             <input
                 type="number"
                 name="training_window_days"
@@ -112,11 +112,11 @@
                 step="1"
                 required
             >
-            <small class="form-note">Ile ostatnich dni model wykorzystuje do nauki. Domyslnie 60, bo daje stabilna probe bez nadmiernego mieszania bardzo starego rynku.</small>
+
         </label>
 
         <label>
-            Liczba dni uzytych do predykcji
+            <span class="label-with-tip">Liczba dni uzytych do predykcji <button type="button" class="info-tip" data-tooltip="Ile poprzednich dni tworzy cechy dla prognozy kolejnego dnia." aria-label="Wyjasnienie liczby dni uzytych do predykcji">i</button></span>
             <input
                 type="number"
                 name="lookback_days"
@@ -125,7 +125,7 @@
                 step="1"
                 required
             >
-            <small class="form-note">Ile poprzednich dni tworzy cechy predykcji. Domyslnie 3, bo szybko reaguje na lokalny trend; 5-10 daje spokojniejszy, ale wolniejszy sygnal.</small>
+            
         </label>
 
         <button type="submit">Start symulacji</button>
