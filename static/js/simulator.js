@@ -187,9 +187,10 @@ function renderModelMetrics(modelMetrics) {
     const metrics = modelMetrics.metrics;
     setText('#model-name', modelMetrics.model_name || '-');
     setText('#model-warning', modelMetrics.warning || '');
+    setText('#model-train-rows', modelMetrics.train_rows === null || modelMetrics.train_rows === undefined ? '-' : `${modelMetrics.train_rows}`);
 
     if (!metrics) {
-        ['#metric-mae', '#metric-rmse', '#metric-r2', '#metric-accuracy', '#metric-f1'].forEach((selector) => {
+        ['#metric-mae', '#metric-rmse', '#metric-r2', '#metric-accuracy', '#metric-f1', '#metric-precision'].forEach((selector) => {
             setText(selector, '-');
         });
         return;
@@ -199,6 +200,7 @@ function renderModelMetrics(modelMetrics) {
     setText('#metric-rmse', formatMetric(metrics.regression.rmse));
     setText('#metric-r2', formatMetric(metrics.regression.r2));
     setText('#metric-accuracy', formatMetricPercent(metrics.classification.accuracy));
+    setText('#metric-precision', formatMetricPercent(metrics.classification.precision));
     setText('#metric-f1', formatMetric(metrics.classification.f1));
 }
 

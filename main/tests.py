@@ -23,8 +23,23 @@ SAMPLE_PRICES = [
     {'date': '2024-01-04', 'open': '109.00', 'high': '115.00', 'low': '105.00', 'close': '105.00', 'volume': 900},
 ]
 
+MODEL_PRICES = [
+    {'date': '2023-12-28', 'open': '95.00', 'high': '99.00', 'low': '94.00', 'close': '96.00', 'volume': 800},
+    {'date': '2023-12-29', 'open': '96.00', 'high': '101.00', 'low': '95.00', 'close': '98.00', 'volume': 850},
+    *SAMPLE_PRICES,
+]
+
+SAMPLE_STOCK_DATA = {
+    'ticker': 'AAPL',
+    'prices': SAMPLE_PRICES,
+    'model_prices': MODEL_PRICES,
+    'model_history_days': len(MODEL_PRICES) - len(SAMPLE_PRICES),
+}
+
 ML_ARTIFACTS = {
     'model_name': 'Random Forest',
+    'train_rows': 30,
+    'test_rows': 10,
     'metrics': {
         'regression': {'mae': 1.0, 'rmse': 1.5, 'r2': 0.7},
         'classification': {'accuracy': 0.8, 'precision': 0.75, 'recall': 0.8, 'f1': 0.77},
@@ -215,8 +230,8 @@ class SimulationApiTests(SimpleTestCase):
         self.client = Client()
 
     @patch('main.views.build_prediction_artifacts', return_value=ML_ARTIFACTS)
-    @patch('main.views.load_stock_prices', return_value=SAMPLE_PRICES)
-    def test_start_simulation_returns_first_day_state_and_model_params(self, _load_stock_prices, build_prediction_artifacts_mock):
+    @patch('main.views.load_stock_prices_with_history', return_value=SAMPLE_STOCK_DATA)
+    def test_start_simulation_returns_first_day_state_and_model_params(self, load_stock_prices_mock, build_prediction_artifacts_mock):
         response = self.client.post(
             '/api/start',
             data={
@@ -241,19 +256,25 @@ class SimulationApiTests(SimpleTestCase):
         self.assertEqual(payload['transaction_history'], [])
         self.assertEqual(payload['prediction_evaluation_history'], [])
         self.assertEqual(payload['prediction']['model'], 'Random Forest')
+        self.assertEqual(payload['model_metrics']['train_rows'], 30)
+        self.assertEqual(payload['model_metrics']['test_rows'], 10)
         self.assertEqual(payload['model_params']['training_window_days'], 45)
         self.assertEqual(payload['model_params']['lookback_days'], 4)
         self.assertEqual(payload['data_stats']['visible_days'], 1)
         self.assertEqual(payload['data_stats']['min_close'], '100.00')
         self.assertNotIn('prices', payload)
+        self.assertNotIn('model_prices', payload)
+        load_stock_prices_mock.assert_called_once()
+        self.assertGreaterEqual(load_stock_prices_mock.call_args.kwargs['history_calendar_days'], 45)
         build_prediction_artifacts_mock.assert_called_once()
-        self.assertEqual(build_prediction_artifacts_mock.call_args.kwargs['current_step'], 0)
+        self.assertEqual(build_prediction_artifacts_mock.call_args.args[0], MODEL_PRICES)
+        self.assertEqual(build_prediction_artifacts_mock.call_args.kwargs['current_step'], 2)
         self.assertEqual(build_prediction_artifacts_mock.call_args.kwargs['training_window_days'], 45)
         self.assertEqual(build_prediction_artifacts_mock.call_args.kwargs['lookback_days'], 4)
 
     @patch('main.views.build_prediction_artifacts', return_value=ML_ARTIFACTS)
-    @patch('main.views.load_stock_prices', return_value=SAMPLE_PRICES)
-    def test_decision_updates_session_and_advances_by_one_day(self, _load_stock_prices, _build_prediction_artifacts):
+    @patch('main.views.load_stock_prices_with_history', return_value=SAMPLE_STOCK_DATA)
+    def test_decision_updates_session_and_advances_by_one_day(self, _load_stock_prices_with_history, _build_prediction_artifacts):
         self.client.post(
             '/api/start',
             data={
@@ -290,10 +311,11 @@ class SimulationApiTests(SimpleTestCase):
         self.assertEqual(payload['last_transaction']['action'], 'BUY')
         self.assertEqual(payload['model_params']['training_window_days'], 45)
         self.assertNotIn('prices', payload)
+        self.assertNotIn('model_prices', payload)
 
-    @patch('main.views.load_stock_prices')
-    def test_start_simulation_returns_readable_error_for_invalid_ticker(self, load_stock_prices):
-        load_stock_prices.side_effect = StockDataError('Nieobslugiwany ticker.', code='invalid_ticker')
+    @patch('main.views.load_stock_prices_with_history')
+    def test_start_simulation_returns_readable_error_for_invalid_ticker(self, load_stock_prices_with_history):
+        load_stock_prices_with_history.side_effect = StockDataError('Nieobslugiwany ticker.', code='invalid_ticker')
 
         response = self.client.post(
             '/api/start',
@@ -315,8 +337,8 @@ class SimulationApiTests(SimpleTestCase):
         )
 
     @patch('main.views.build_prediction_artifacts', return_value=ML_ARTIFACTS)
-    @patch('main.views.load_stock_prices', return_value=SAMPLE_PRICES)
-    def test_decision_returns_readable_error_for_insufficient_cash(self, _load_stock_prices, _build_prediction_artifacts):
+    @patch('main.views.load_stock_prices_with_history', return_value=SAMPLE_STOCK_DATA)
+    def test_decision_returns_readable_error_for_insufficient_cash(self, _load_stock_prices_with_history, _build_prediction_artifacts):
         self.client.post(
             '/api/start',
             data={
@@ -340,8 +362,8 @@ class SimulationApiTests(SimpleTestCase):
         self.assertEqual(response.json()['error_code'], 'insufficient_cash')
 
     @patch('main.views.build_prediction_artifacts', return_value=ML_ARTIFACTS)
-    @patch('main.views.load_stock_prices', return_value=SAMPLE_PRICES)
-    def test_decision_returns_error_when_simulation_is_finished(self, _load_stock_prices, _build_prediction_artifacts):
+    @patch('main.views.load_stock_prices_with_history', return_value=SAMPLE_STOCK_DATA)
+    def test_decision_returns_error_when_simulation_is_finished(self, _load_stock_prices_with_history, _build_prediction_artifacts):
         self.client.post(
             '/api/start',
             data={
@@ -376,8 +398,8 @@ class SimulationApiTests(SimpleTestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()['error_code'], 'simulation_not_started')
 
-    @patch('main.views.load_stock_prices', return_value=SAMPLE_PRICES)
-    def test_start_simulation_validates_model_params(self, _load_stock_prices):
+    @patch('main.views.load_stock_prices_with_history', return_value=SAMPLE_STOCK_DATA)
+    def test_start_simulation_validates_model_params(self, _load_stock_prices_with_history):
         response = self.client.post(
             '/api/start',
             data={

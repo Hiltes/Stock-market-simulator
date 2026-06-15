@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -44,7 +44,52 @@ def validate_stock_request(ticker: str, start_date: str, end_date: str) -> tuple
 
 def load_stock_prices(ticker: str, start_date: str, end_date: str) -> list[dict[str, Any]]:
     normalized_ticker, parsed_start, parsed_end = validate_stock_request(ticker, start_date, end_date)
+    prices = _download_stock_prices(normalized_ticker, parsed_start, parsed_end)
 
+    if len(prices) < 2:
+        raise StockDataError(
+            'Zakres musi zawierac co najmniej dwa dni notowan.',
+            code='not_enough_data',
+        )
+
+    return prices
+
+
+def load_stock_prices_with_history(
+    ticker: str,
+    start_date: str,
+    end_date: str,
+    history_calendar_days: int,
+) -> dict[str, Any]:
+    normalized_ticker, parsed_start, parsed_end = validate_stock_request(ticker, start_date, end_date)
+    history_start = parsed_start - timedelta(days=max(0, int(history_calendar_days)))
+    all_prices = _download_stock_prices(normalized_ticker, history_start, parsed_end)
+    simulation_prices = [
+        price
+        for price in all_prices
+        if parsed_start.isoformat() <= price['date'] < parsed_end.isoformat()
+    ]
+
+    if len(simulation_prices) < 2:
+        raise StockDataError(
+            'Zakres musi zawierac co najmniej dwa dni notowan.',
+            code='not_enough_data',
+        )
+
+    first_simulation_date = simulation_prices[0]['date']
+    model_prices = [price for price in all_prices if price['date'] <= first_simulation_date]
+    if len(simulation_prices) > 1:
+        model_prices.extend(simulation_prices[1:])
+
+    return {
+        'ticker': normalized_ticker,
+        'prices': simulation_prices,
+        'model_prices': model_prices,
+        'model_history_days': max(0, len(model_prices) - len(simulation_prices)),
+    }
+
+
+def _download_stock_prices(ticker: str, start_date: date, end_date: date) -> list[dict[str, Any]]:
     try:
         import yfinance as yf
     except ImportError as exc:
@@ -55,9 +100,9 @@ def load_stock_prices(ticker: str, start_date: str, end_date: str) -> list[dict[
         ) from exc
 
     frame = yf.download(
-        normalized_ticker,
-        start=parsed_start.isoformat(),
-        end=parsed_end.isoformat(),
+        ticker,
+        start=start_date.isoformat(),
+        end=end_date.isoformat(),
         auto_adjust=False,
         progress=False,
     )
@@ -92,12 +137,6 @@ def load_stock_prices(ticker: str, start_date: str, end_date: str) -> list[dict[
                 'close': _to_decimal_string(row['Close']),
                 'volume': int(row['Volume']),
             }
-        )
-
-    if len(prices) < 2:
-        raise StockDataError(
-            'Zakres musi zawierac co najmniej dwa dni notowan.',
-            code='not_enough_data',
         )
 
     return prices

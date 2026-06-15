@@ -77,11 +77,12 @@ docker compose exec web python manage.py test
 
 1. Uzytkownik wybiera ticker, zakres dat i gotowke poczatkowa.
 2. Backend pobiera historyczne dane gieldowe z Yahoo Finance.
-3. Dane sa przetwarzane na cechy ML: opoznione ceny, zmiany procentowe, srednie kroczace, zmiennosc i zmiany wolumenu.
-4. System trenuje modele Random Forest na poczatkowej czesci szeregu czasowego.
-5. Frontend pokazuje kolejne dni notowan, predykcje, dane OHLC, wolumen, portfel i historie decyzji.
-6. Uzytkownik wykonuje decyzje: kupno, sprzedaz albo czekanie.
-7. Po zakonczeniu symulacji aplikacja pokazuje podsumowanie i porownanie ze strategia "kup i trzymaj".
+3. Backend pobiera tez niewidoczny bufor danych sprzed daty startu, uzywany wylacznie do treningu modelu.
+4. Dane sa przetwarzane na cechy ML: opoznione ceny, zmiany procentowe, srednie kroczace, zmiennosc i zmiany wolumenu.
+5. System trenuje modele Random Forest na danych historycznych dostepnych do aktualnego dnia symulacji.
+6. Frontend pokazuje kolejne dni notowan, predykcje, dane OHLC, wolumen, portfel i historie decyzji.
+7. Uzytkownik wykonuje decyzje: kupno, sprzedaz albo czekanie.
+8. Po zakonczeniu symulacji aplikacja pokazuje podsumowanie i porownanie ze strategia "kup i trzymaj".
 
 ## API
 
@@ -116,7 +117,7 @@ POST /api/decision
 }
 ```
 
-Odpowiedz API zawiera tylko aktualnie odsloniety dzien (`current_day` i `ohlcv`), stan portfela (`cash`, `shares`, `portfolio_value`, `profit_loss`) oraz historie wykonanych transakcji. Backend nie zwraca przyszlych dni przed wykonaniem kolejnego kroku. Predykcja modelu jest liczona w trybie walk-forward, czyli tylko na podstawie danych odslonietych do biezacego dnia. Dla zgodnosci zostawiony jest tez alias `POST /api/action`.
+Odpowiedz API zawiera tylko aktualnie odsloniety dzien (`current_day` i `ohlcv`), stan portfela (`cash`, `shares`, `portfolio_value`, `profit_loss`) oraz historie wykonanych transakcji. Backend nie zwraca przyszlych dni przed wykonaniem kolejnego kroku. Predykcja modelu jest liczona w trybie walk-forward: moze korzystac z niewidocznego bufora danych sprzed daty startu oraz z dni odslonietych do biezacego kroku, ale nie korzysta z przyszlych dni symulacji. Dla zgodnosci zostawiony jest tez alias `POST /api/action`.
 
 Frontend pokazuje dodatkowo:
 
@@ -130,6 +131,7 @@ Projekt wykorzystuje:
 - `RandomForestRegressor` do predykcji nastepnej ceny zamkniecia
 - `RandomForestClassifier` do oceny kierunku zmiany ceny
 - walk-forward training bez wykorzystywania przyszlych danych wzgledem aktualnego kroku symulacji
+- niewidoczny bufor historyczny sprzed daty startu, zeby Random Forest mogl dzialac od pierwszego dnia symulacji
 
 Prezentowane metryki:
 
@@ -147,7 +149,7 @@ Predykcje maja charakter orientacyjny. Dane gieldowe sa zaszumione i model nie g
 - decyzje wykonywane sa po cenie zamkniecia aktualnie odslonietego dnia
 - przyszle dane pozostaja ukryte do momentu wykonania kolejnego kroku
 - metryki i predykcje modelu maja charakter pomocniczy, nie inwestycyjnej rekomendacji
-- jesli odsloniety fragment szeregu jest zbyt krotki do treningu Random Forest, aplikacja pokazuje predykcje bazowa
+- jesli mimo bufora historycznego danych jest zbyt malo do treningu Random Forest, aplikacja pokazuje predykcje bazowa
 
 ## Zakres funkcjonalny
 

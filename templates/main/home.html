@@ -270,16 +270,16 @@
                 <strong id="model-lookback">-</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">Dozwolone tickery <button type="button" class="info-tip" data-tooltip="Spolki dostepne w wersji demo." aria-label="Wyjasnienie tickerow">i</button></span>
-                <strong id="model-tickers">AAPL, TSLA, MSFT, NVDA</strong>
+                <span class="label-with-tip">Rekordy treningowe <button type="button" class="info-tip" data-tooltip="Liczba kompletnych rekordow uzytych do uczenia modelu w aktualnym kroku." aria-label="Wyjasnienie rekordow treningowych">i</button></span>
+                <strong id="model-train-rows">-</strong>
             </article>
             <article class="metric">
                 <span class="label-with-tip">Tryb uczenia <button type="button" class="info-tip" data-tooltip="W tej wersji jest staly: model uczy sie tylko na danych juz odslonietych, bez podgladu przyszlosci." aria-label="Wyjasnienie trybu uczenia">i</button></span>
                 <strong id="model-walk-forward">Walk-forward</strong>
             </article>
             <article class="metric">
-                <span class="label-with-tip">Przyszle dane <button type="button" class="info-tip" data-tooltip="Kolejne dni sa ukryte do nastepnego kroku." aria-label="Wyjasnienie przyszlych danych">i</button></span>
-                <strong id="model-no-leakage">Ukryte</strong>
+                <span class="label-with-tip">Precision <button type="button" class="info-tip" data-tooltip="Jaki odsetek przewidzianych wzrostow faktycznie okazal sie wzrostem. Zakres 0-100%; im wyzej, tym lepiej." aria-label="Wyjasnienie Precision">i</button></span>
+                <strong id="metric-precision">-</strong>
             </article>
         </div>
         <div class="metrics-grid model-metrics-grid">
@@ -394,5 +394,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/simulator.js' %}?v=ml-hinty-zoom-3"></script>
+<script src="{% static 'js/simulator.js' %}?v=ml-hinty-zoom-4"></script>
 {% endblock %}

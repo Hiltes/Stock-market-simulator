@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
 
-from main.services.data_loader import StockDataError, load_stock_prices
+from main.services.data_loader import StockDataError, load_stock_prices_with_history
 from main.services.ml_model import (
     DEFAULT_LOOKBACK_DAYS,
     DEFAULT_TRAINING_WINDOW_DAYS,
@@ -38,10 +38,22 @@ def api_start_simulation(request):
         start_date = payload.get('start_date')
         end_date = payload.get('end_date')
         initial_cash = payload.get('initial_cash', '10000')
+        model_params = _model_params_from_payload(payload)
 
-        prices = load_stock_prices(ticker, start_date, end_date)
-        state = create_simulation_state(ticker.strip().upper(), prices, initial_cash)
-        state['model_params'] = _model_params_from_payload(payload)
+        stock_data = load_stock_prices_with_history(
+            ticker,
+            start_date,
+            end_date,
+            history_calendar_days=_history_buffer_calendar_days(model_params),
+        )
+        state = create_simulation_state(
+            stock_data['ticker'],
+            stock_data['prices'],
+            initial_cash,
+            model_prices=stock_data['model_prices'],
+            model_history_days=stock_data['model_history_days'],
+        )
+        state['model_params'] = model_params
         _save_simulation_state(request, state)
 
         return JsonResponse(_state_response(state))
@@ -116,9 +128,10 @@ def _state_response(state):
 def _build_ml_artifacts(state):
     params = state.get('model_params', {})
     try:
+        model_history_days = int(state.get('model_history_days', 0))
         return build_prediction_artifacts(
-            state['prices'],
-            current_step=int(state['current_step']),
+            state.get('model_prices', state['prices']),
+            current_step=model_history_days + int(state['current_step']),
             training_window_days=int(params.get('training_window_days', DEFAULT_TRAINING_WINDOW_DAYS)),
             lookback_days=int(params.get('lookback_days', DEFAULT_LOOKBACK_DAYS)),
         )
@@ -144,6 +157,8 @@ def _model_metrics(artifacts):
     return {
         'model_name': artifacts.get('model_name', 'Model bazowy'),
         'metrics': artifacts.get('metrics'),
+        'train_rows': artifacts.get('train_rows'),
+        'test_rows': artifacts.get('test_rows'),
         'warning': artifacts.get('warning'),
     }
 
@@ -246,6 +261,12 @@ def _model_params_from_payload(payload):
         'training_window_days': _positive_int(payload.get('training_window_days', DEFAULT_TRAINING_WINDOW_DAYS), 'training_window_days', minimum=10),
         'lookback_days': _positive_int(payload.get('lookback_days', DEFAULT_LOOKBACK_DAYS), 'lookback_days', minimum=2),
     }
+
+
+def _history_buffer_calendar_days(model_params):
+    training_window_days = int(model_params.get('training_window_days', DEFAULT_TRAINING_WINDOW_DAYS))
+    lookback_days = int(model_params.get('lookback_days', DEFAULT_LOOKBACK_DAYS))
+    return max(45, training_window_days * 2 + lookback_days * 4)
 
 
 def _positive_int(value, field_name, minimum=1):

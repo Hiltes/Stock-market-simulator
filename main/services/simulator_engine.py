@@ -19,6 +19,8 @@ def create_simulation_state(
     ticker: str,
     prices: list[dict[str, Any]],
     initial_cash: str | int | float | Decimal,
+    model_prices: list[dict[str, Any]] | None = None,
+    model_history_days: int = 0,
 ) -> dict[str, Any]:
     if len(prices) < 2:
         raise SimulationError(
@@ -36,6 +38,8 @@ def create_simulation_state(
     state = {
         'ticker': ticker,
         'prices': deepcopy(prices),
+        'model_prices': deepcopy(model_prices or prices),
+        'model_history_days': int(model_history_days),
         'initial_cash': _money_to_string(cash),
         'cash': _money_to_string(cash),
         'shares': 0,
