@@ -119,7 +119,7 @@ def _state_response(state):
     artifacts = _build_ml_artifacts(state)
     response = serialize_state(state)
     response['prediction'] = _prediction_for_state(state, artifacts)
-    response['model_metrics'] = _model_metrics(artifacts)
+    response['model_metrics'] = _model_metrics(state, artifacts)
     response['model_params'] = state.get('model_params', {})
     response['data_stats'] = _data_stats(state)
     return response
@@ -152,13 +152,14 @@ def _prediction_for_state(state, artifacts):
     return _baseline_prediction(state)
 
 
-def _model_metrics(artifacts):
+def _model_metrics(state, artifacts):
     artifacts = artifacts or {}
+    has_evaluation = bool(state.get('prediction_evaluation_history'))
     return {
         'model_name': artifacts.get('model_name', 'Model bazowy'),
-        'metrics': artifacts.get('metrics'),
-        'train_rows': artifacts.get('train_rows'),
-        'test_rows': artifacts.get('test_rows'),
+        'metrics': artifacts.get('metrics') if has_evaluation else None,
+        'train_rows': artifacts.get('train_rows') if has_evaluation else None,
+        'test_rows': artifacts.get('test_rows') if has_evaluation else None,
         'warning': artifacts.get('warning'),
     }
 
